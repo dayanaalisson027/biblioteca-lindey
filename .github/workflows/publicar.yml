@@ -26,6 +26,11 @@ jobs:
           python-version: "3.12"
       - name: Instalar Pillow (miniaturas)
         run: pip install -r requirements.txt
+      - name: Instalar Poppler (páginas de los PDF)
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
+      - name: Instalar LibreOffice (solo si hay archivos Word)
+        if: hashFiles('pdfs/*.docx', 'pdfs/*.doc', 'pdfs/*.odt', 'pdfs/*.rtf') != ''
+        run: sudo apt-get install -y -qq --no-install-recommends libreoffice-writer
       - name: Generar el sitio
         run: python build.py
       - uses: actions/configure-pages@v5
