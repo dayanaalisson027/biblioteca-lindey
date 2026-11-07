@@ -1,0 +1,21 @@
+{
+  "nombre": "Biblioteca Lindey",
+  "url": "https://dayanaalisson027.github.io/biblioteca-lindey",
+  "descripcion": "Biblioteca abierta de ejercicios universitarios de ingeniería con enunciado completo y figura: Estática, Dinámica, Resistencia de Materiales, Mecánica de Materiales y más.",
+  "whatsapp": "51970302148",
+  "whatsapp_visible": "+51 970 302 148",
+  "facebook": "https://www.facebook.com/lindeyasesoramientouniversitario/",
+  "google_verificacion": "",
+  "universidades": {
+    "UCSUR": "Universidad Científica del Sur",
+    "UTP": "Universidad Tecnológica del Perú"
+  },
+  "orden_cursos": [
+    "Estática",
+    "Dinámica",
+    "Resistencia de Materiales",
+    "Resistencia de Materiales I",
+    "Mecánica de Materiales II",
+    "Mecánica de Fluidos"
+  ]
+}
