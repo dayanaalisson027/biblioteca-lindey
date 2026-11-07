@@ -1,15 +1,44 @@
-/* Biblioteca Lindey — buscador de la portada.
-   Lee buscar.json y filtra por tema, curso, universidad, conceptos y enunciado.
+/* Biblioteca Lindey — carruseles y buscador.
+   Carruseles: flechas para avanzar y retroceder (en celular se desliza con el dedo).
+   Buscador: lee buscar.json y filtra por tema, curso, universidad, conceptos y enunciado.
    Ignora tildes y mayúsculas; acepta frases largas pegadas desde Google Lens. */
 (function () {
   "use strict";
+
+  var raiz = document.body.getAttribute("data-raiz") || "";
+
+  /* ---------------------------------------------------------- carruseles */
+
+  function activarCarrusel(caja) {
+    var pista = caja.querySelector(".carrusel__pista");
+    var botones = caja.querySelectorAll(".carrusel__btn");
+    if (!pista) return;
+    function actualizar() {
+      var max = pista.scrollWidth - pista.clientWidth - 2;
+      botones.forEach(function (b) {
+        b.disabled = b.getAttribute("data-dir") === "-1" ? pista.scrollLeft <= 2 : pista.scrollLeft >= max;
+      });
+    }
+    botones.forEach(function (b) {
+      b.addEventListener("click", function () {
+        var paso = Math.max(pista.clientWidth * 0.85, 240);
+        pista.scrollBy({ left: paso * Number(b.getAttribute("data-dir")), behavior: "smooth" });
+      });
+    });
+    pista.addEventListener("scroll", function () { window.requestAnimationFrame(actualizar); }, { passive: true });
+    window.addEventListener("resize", actualizar);
+    actualizar();
+  }
+
+  document.querySelectorAll("[data-carrusel]").forEach(activarCarrusel);
+
+  /* ------------------------------------------------------------ buscador */
 
   var form = document.getElementById("buscar");
   var input = document.getElementById("q");
   var caja = document.getElementById("resultados");
   if (!form || !input || !caja) return;
 
-  var raiz = document.body.getAttribute("data-raiz") || "";
   var flotante = document.querySelector(".flotante");
   var enlaceWa = flotante ? flotante.href : "";
   var datos = null;
@@ -53,14 +82,25 @@
     return el;
   }
 
-  function tarjeta(d) {
-    var li = elemento("li", "tarjeta");
+  function ficha(d) {
+    var li = elemento("li", d.m ? "ficha" : "ficha ficha--pdf");
     var a = elemento("a");
     a.href = raiz + d.url;
-    var meta = [d.c, d.u, d.v, d.e].filter(Boolean).join(" · ");
-    a.appendChild(elemento("span", "tarjeta__meta", meta));
-    a.appendChild(elemento("span", "tarjeta__titulo", d.t));
-    a.appendChild(elemento("span", "tarjeta__texto", d.r));
+    if (d.m) {
+      var img = elemento("img");
+      img.src = raiz + d.m;
+      img.alt = d.t;
+      img.loading = "lazy";
+      if (d.mw) { img.width = d.mw; img.height = d.mh; }
+      a.appendChild(img);
+    } else {
+      var icono = elemento("span", "ficha__icono", "PDF");
+      a.appendChild(icono);
+    }
+    var cuerpo = elemento("span", "ficha__cuerpo");
+    cuerpo.appendChild(elemento("span", "ficha__meta", [d.c, d.u, d.v, d.e].filter(Boolean).join(" · ")));
+    cuerpo.appendChild(elemento("span", "ficha__titulo", d.t));
+    a.appendChild(cuerpo);
     li.appendChild(a);
     return li;
   }
@@ -93,7 +133,7 @@
       var n = encontrados.length;
       var estado = elemento("p", "resultados__estado",
         n === 0 ? "No encontramos ese ejercicio todavía. "
-                : n + (n === 1 ? " ejercicio encontrado." : " ejercicios encontrados."));
+                : n + (n === 1 ? " resultado." : " resultados."));
       if (n === 0 && enlaceWa) {
         var wa = elemento("a", "", "Escríbenos por WhatsApp");
         wa.href = enlaceWa;
@@ -103,8 +143,8 @@
       }
       caja.appendChild(estado);
       if (n) {
-        var ul = elemento("ul", "tarjetas");
-        encontrados.slice(0, 40).forEach(function (r) { ul.appendChild(tarjeta(r.d)); });
+        var ul = elemento("ul", "fichas");
+        encontrados.slice(0, 40).forEach(function (r) { ul.appendChild(ficha(r.d)); });
         caja.appendChild(ul);
       }
       caja.hidden = false;

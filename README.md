@@ -29,13 +29,22 @@ Campos de cada ejercicio:
 
 Para que una universidad muestre su nombre completo, agrégala en `sitio.json` dentro de `"universidades"`.
 
+Cada ejercicio genera solo su PDF (enunciado + figura + enlace a WhatsApp) y aparece en el carrusel de su curso en la portada.
+
+## Cómo agregar un PDF propio al repositorio
+
+1. Entra a la carpeta `pdfs/` → **Add file → Upload files** → sube el PDF → **Commit changes**.
+2. Copia `pdfs/_PLANTILLA.md` en un archivo nuevo de `pdfs/` (ejemplo: `examen-parcial-estatica-ucsur-2026-1.md`), escribe el nombre del PDF en `archivo:`, completa título, curso y descripción → **Commit changes**.
+3. El PDF aparece en el **Repositorio de PDFs**, en la página de su curso y con su propia página.
+
 ## Cómo funciona
 
 - `ejercicios/*.md` — un archivo por ejercicio.
 - `imagenes/` — imágenes modo Lindey.
+- `pdfs/` — PDFs propios, cada uno con su `.md`.
 - `estaticos/` — estilos, buscador, logo.
 - `sitio.json` — nombre, URL pública, WhatsApp, universidades y orden de cursos.
-- `build.py` — genera el sitio en `_site/` (solo Python, sin instalar nada).
+- `build.py` — genera el sitio en `_site/` (solo Python; con `pip install Pillow` crea miniaturas livianas para los carruseles).
 - `.github/workflows/publicar.yml` — cada cambio en `main` vuelve a generar y publicar el sitio en GitHub Pages.
 
 Para generarlo en tu PC: `python build.py` y abre `_site/index.html`.
@@ -44,7 +53,7 @@ Para generarlo en tu PC: `python build.py` y abre `_site/index.html`.
 
 En Cloudflare Pages → *Create a project* → conecta este repositorio y usa:
 
-- **Build command:** `python build.py`
+- **Build command:** `pip install -r requirements.txt && python build.py`
 - **Build output directory:** `_site`
 - **Variable de entorno:** `SITE_URL` = la dirección nueva (por ejemplo `https://biblioteca-lindey.pages.dev` o tu dominio `.com`)
 
