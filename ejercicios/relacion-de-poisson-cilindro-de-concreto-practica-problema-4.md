@@ -7,5 +7,10 @@ evaluacion: Práctica
 imagen: Lindey_ResMat1_Practica_Problema4.jpg
 fecha: 2026-11-06
 palabras: carga admisible, expansión lateral, deformación transversal, módulo de elasticidad del concreto
+tema_en: Poisson's ratio in a concrete cylinder
+palabras_en: allowable load, lateral expansion, transverse strain, modulus of elasticity of concrete
 ---
 Calcular la carga admisible que se puede aplicar a un cilindro de concreto de 8 cm de diámetro para que no sufra una expansión lateral mayor a 0.002 cm. El módulo de elasticidad del concreto es 20 GPa y su relación de Poisson es igual a 0.15.
+
+[en]
+Calculate the allowable load that can be applied to an 8 cm diameter concrete cylinder so that its lateral expansion does not exceed 0.002 cm. The modulus of elasticity of the concrete is 20 GPa and its Poisson's ratio is 0.15.

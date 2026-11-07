@@ -10,6 +10,16 @@
     "UCSUR": "Universidad Científica del Sur",
     "UTP": "Universidad Tecnológica del Perú"
   },
+  "nombre_en": "Lindey Library",
+  "descripcion_en": "Free library of university engineering exercises with full problem statement, figure and PDF: Statics, Dynamics, Strength of Materials, Mechanics of Materials and more.",
+  "cursos_en": {
+    "Estática": "Statics",
+    "Dinámica": "Dynamics",
+    "Resistencia de Materiales": "Strength of Materials",
+    "Resistencia de Materiales I": "Strength of Materials I",
+    "Mecánica de Materiales II": "Mechanics of Materials II",
+    "Mecánica de Fluidos": "Fluid Mechanics"
+  },
   "orden_cursos": [
     "Estática",
     "Dinámica",

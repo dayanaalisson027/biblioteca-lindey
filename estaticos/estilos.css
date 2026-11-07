@@ -73,6 +73,10 @@ h2 { font-size: 1.3rem; font-weight: 750; }
 .cabecera__nav { display: flex; gap: 1.25rem; }
 .cabecera__nav a { color: var(--celeste); text-decoration: none; font-weight: 600; font-size: .95rem; }
 .cabecera__nav a:hover { color: var(--lima); }
+.cabecera__nav .cabecera__idioma {
+  border: 1.5px solid rgba(132, 255, 63, .6); color: var(--lima); border-radius: 999px; padding: .2rem .7rem; font-size: .85rem;
+}
+.cabecera__nav .cabecera__idioma:hover { background: var(--lima); color: var(--marino-profundo); }
 
 /* -------------------------------------------------------------- portada */
 
@@ -238,12 +242,18 @@ a.chip--curso:hover { color: #fff; }
 
 .carrusel { position: relative; }
 .carrusel__pista {
-  list-style: none; margin: 0; padding: .3rem .15rem 1.1rem;
+  list-style: none; margin: 0; padding: .4rem .15rem 1rem;
   display: grid; grid-auto-flow: column; grid-auto-columns: 230px; gap: 1rem;
   overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth;
-  scrollbar-width: thin; scrollbar-color: var(--celeste-medio) transparent;
+  scrollbar-width: none;
 }
+.carrusel__pista::-webkit-scrollbar { display: none; }
 .carrusel__pista > li { scroll-snap-align: start; }
+.carrusel--auto .carrusel__pista {
+  scroll-snap-type: none; scroll-behavior: auto;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 3%, #000 97%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 3%, #000 97%, transparent 100%);
+}
 .carrusel__btn {
   position: absolute; top: calc(50% - 1.5rem); transform: translateY(-50%); z-index: 2;
   width: 46px; height: 46px; border-radius: 50%; border: 2px solid var(--lima);
@@ -270,6 +280,117 @@ a.chip--curso:hover { color: #fff; }
 .ficha--pdf .ficha__icono svg { width: 64px; height: 64px; }
 
 .fichas { list-style: none; padding: 0; margin: 0 0 1rem; display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+
+/* Portadas de documentos (aspecto de revista) */
+.ficha--doc a { background: transparent; border: 0; overflow: visible; }
+.ficha--doc a:hover { box-shadow: none; }
+.libro-tapa {
+  display: block; position: relative; border-radius: 4px 10px 10px 4px; overflow: hidden; background: #fff;
+  box-shadow: -4px 0 0 0 var(--marino) inset, 0 2px 4px rgba(6, 15, 39, .15), 0 12px 26px rgba(6, 15, 39, .22);
+  transition: transform .25s, box-shadow .25s; transform-origin: left center;
+}
+.libro-tapa::after {
+  content: ""; position: absolute; inset: 0 auto 0 0; width: 14px;
+  background: linear-gradient(to right, rgba(0, 0, 0, .28), rgba(255, 255, 255, .15) 60%, transparent);
+}
+.ficha--doc a:hover .libro-tapa { transform: perspective(900px) rotateY(-12deg); box-shadow: 0 18px 34px rgba(6, 15, 39, .3); }
+.libro-tapa img { width: 100%; height: auto; aspect-ratio: 210 / 297; object-fit: cover; }
+.libro-tapa__vacia {
+  aspect-ratio: 210 / 297; display: grid; place-items: center; align-content: center; gap: .3rem;
+  background: var(--marino-profundo); color: var(--lima); font-weight: 900; font-size: 1.6rem;
+}
+.libro-tapa__vacia svg { width: 56px; height: 56px; }
+.ficha--doc .ficha__cuerpo { padding: .8rem .2rem 0; }
+
+/* ------------------------------------------------- visor tipo revista */
+
+.libro {
+  margin: 0 0 1.5rem; padding: clamp(.75rem, 2.5vw, 1.5rem); border-radius: var(--radio);
+  background: radial-gradient(1200px 400px at 50% 0, #1b3a7a, var(--marino-profundo) 70%);
+  box-shadow: var(--sombra); outline: none;
+}
+.libro:focus-visible { box-shadow: 0 0 0 3px var(--lima); }
+.libro__escenario { display: flex; justify-content: center; }
+.libro__hojas {
+  position: relative; display: flex; margin: 0 auto; perspective: 2400px; cursor: pointer;
+  user-select: none; -webkit-user-select: none; filter: drop-shadow(0 16px 30px rgba(0, 0, 0, .45));
+}
+.libro__pag { position: relative; flex: 1 1 0; min-width: 0; background: #fff; overflow: hidden; }
+.libro__pag.vacia { background: transparent; }
+.libro__pag img, .libro__cara img { width: 100%; height: 100%; object-fit: contain; display: block; background: #fff; pointer-events: none; }
+.libro__hojas.es-doble .izq { border-radius: 6px 0 0 6px; }
+.libro__hojas.es-doble .der { border-radius: 0 6px 6px 0; }
+.libro__hojas.es-doble .izq::after, .libro__hojas.es-doble .der::after {
+  content: ""; position: absolute; top: 0; bottom: 0; width: 40px; pointer-events: none;
+}
+.libro__hojas.es-doble .izq::after { right: 0; background: linear-gradient(to left, rgba(0, 0, 0, .22), transparent); }
+.libro__hojas.es-doble .der::after { left: 0; background: linear-gradient(to right, rgba(0, 0, 0, .22), transparent); }
+.libro__hojas.es-doble .vacia::after { display: none; }
+.libro__pag.unica { border-radius: 6px; }
+.libro__pag.entra-der { animation: entra-der .45s ease-out; }
+.libro__pag.entra-izq { animation: entra-izq .45s ease-out; }
+@keyframes entra-der { from { opacity: 0; transform: translateX(30px); } }
+@keyframes entra-izq { from { opacity: 0; transform: translateX(-30px); } }
+
+.libro__volteo {
+  position: absolute; top: 0; bottom: 0; width: 50%; z-index: 3;
+  transform-style: preserve-3d; transition: transform .8s cubic-bezier(.45, .05, .2, 1);
+}
+.libro__volteo.hacia-izq { left: 50%; transform-origin: left center; }
+.libro__volteo.hacia-izq.girando { transform: rotateY(-180deg); }
+.libro__volteo.hacia-der { left: 0; transform-origin: right center; }
+.libro__volteo.hacia-der.girando { transform: rotateY(180deg); }
+.libro__cara { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; background: #fff; overflow: hidden; }
+.libro__cara--dorso { transform: rotateY(180deg); }
+.libro__cara.vacia { background: transparent; }
+
+.libro__barra { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: .6rem; margin: 1rem 0 .75rem; }
+.libro__btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: .35rem; min-width: 44px; height: 44px;
+  padding: 0 .8rem; border-radius: 999px; border: 2px solid var(--lima); background: transparent;
+  color: var(--lima); font: inherit; font-weight: 800; font-size: 1.5rem; line-height: 1; cursor: pointer; text-decoration: none;
+}
+.libro__btn:hover { background: var(--lima); color: var(--marino-profundo); }
+.libro__btn--txt { font-size: .9rem; }
+.libro__contador { color: #fff; font-weight: 800; min-width: 6.5rem; text-align: center; font-variant-numeric: tabular-nums; }
+.libro__miniaturas { display: flex; gap: .5rem; overflow-x: auto; padding: .4rem .2rem .6rem; scrollbar-width: thin; scrollbar-color: var(--celeste-medio) transparent; }
+.libro__mini {
+  flex: none; width: 74px; padding: 0; border: 2px solid transparent; border-radius: 6px; background: none;
+  cursor: pointer; position: relative; opacity: .7; transition: opacity .15s, border-color .15s;
+}
+.libro__mini img { width: 100%; height: auto; display: block; border-radius: 4px; background: #fff; }
+.libro__mini span { position: absolute; right: 4px; bottom: 4px; font-size: .7rem; font-weight: 800; background: var(--marino-profundo); color: var(--lima); border-radius: 4px; padding: 0 .3rem; }
+.libro__mini:hover, .libro__mini.es-activa { opacity: 1; border-color: var(--lima); }
+.libro:fullscreen { display: flex; flex-direction: column; justify-content: center; border-radius: 0; }
+.libro__respaldo img { max-width: 720px; margin: 0 auto 1rem; }
+
+.documento__acciones { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 1rem 1.5rem; margin: 0 0 1.5rem; }
+.documento__acciones .compartir { margin: 0; flex: 1; min-width: 280px; }
+.transcripcion h3 { font-size: 1.1rem; color: var(--marino); margin: 1.6rem 0 .5rem; }
+.transcripcion h3 small { font-size: .8rem; font-weight: 600; color: var(--celeste-oscuro); }
+.transcripcion h3 a { color: inherit; }
+.transcripcion h4 { font-size: 1rem; margin: 1.2rem 0 .4rem; }
+.transcripcion ul { margin: 0 0 1rem; padding-left: 1.2rem; }
+.transcripcion li { margin: .25rem 0; font-size: 1.04rem; }
+
+/* ------------------------------------------------------------ compartir */
+
+.compartir { margin: 1.25rem 0 0; padding-top: 1rem; border-top: 1px dashed var(--borde); }
+.compartir__titulo { display: flex; align-items: center; gap: .4rem; font-weight: 800; color: var(--marino); font-size: .95rem; margin-bottom: .6rem; }
+.compartir__botones { display: flex; flex-wrap: wrap; gap: .5rem; }
+.compartir__btn {
+  display: inline-flex; align-items: center; gap: .4rem; padding: .5rem .9rem; border-radius: 999px;
+  font: inherit; font-size: .9rem; font-weight: 800; text-decoration: none; cursor: pointer;
+  border: 0; color: #fff; transition: transform .12s, filter .12s;
+}
+.compartir__btn svg { width: 18px; height: 18px; }
+.compartir__btn:hover { transform: translateY(-1px); filter: brightness(1.08); color: #fff; }
+.compartir__btn--wa { background: #1fa855; }
+.compartir__btn--fb { background: #1877f2; }
+.compartir__btn--tg { background: #229ed9; }
+.compartir__btn--copiar, .compartir__btn--mas { background: var(--marino); color: var(--lima); }
+.compartir__btn--copiar:hover, .compartir__btn--mas:hover { color: var(--lima); }
+.compartir__btn.es-ok { background: var(--lima); color: var(--marino-profundo); }
 
 /* ---------------------------------------------------------- botones */
 
@@ -349,8 +470,12 @@ a.chip--curso:hover { color: #fff; }
   .buscador button { padding: .85rem; }
   .flotante { right: .9rem; bottom: .9rem; padding: .85rem 1.3rem; font-size: 1.05rem; }
   .carrusel__pista { grid-auto-columns: 62%; }
-  .carrusel__btn { display: none; }
+  .carrusel__btn { width: 38px; height: 38px; font-size: 1.5rem; }
+  .carrusel__btn--prev { left: 4px; }
+  .carrusel__btn--next { right: 4px; }
   .doc { flex-wrap: wrap; }
+  .libro__btn--txt { font-size: .8rem; padding: 0 .65rem; }
+  .compartir__btn { padding: .5rem .75rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {

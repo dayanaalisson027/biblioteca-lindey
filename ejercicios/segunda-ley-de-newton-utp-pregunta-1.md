@@ -7,5 +7,10 @@ imagen: Lindey_Dinamica_UTP_Pregunta1.jpg
 solucion_imagen: Lindey_Dinamica_UTP_Solucion_P1.jpg
 fecha: 2026-11-06
 palabras: fricción cinética, péndulo, aceleración, diagrama de cuerpo libre, tensión
+tema_en: Newton's second law
+palabras_en: kinetic friction, pendulum, acceleration, free-body diagram, tension
 ---
 En la figura, la masa de A es de 30 kg y la masa de B es de 5 kg. El coeficiente de fricción cinética entre A y la superficie horizontal es μk = 0.2. La fuerza constante F ocasiona que el sistema se acelere. El ángulo θ = 20° es constante. Determine F.
+
+[en]
+In the figure, the mass of A is 30 kg and the mass of B is 5 kg. The coefficient of kinetic friction between A and the horizontal surface is μk = 0.2. The constant force F causes the system to accelerate. The angle θ = 20° is constant. Determine F.
