@@ -20,7 +20,8 @@
     "Resistencia de Materiales I": "Strength of Materials I",
     "Mecánica de Materiales II": "Mechanics of Materials II",
     "Mecánica de Fluidos": "Fluid Mechanics",
-    "Interpretación de Planos": "Blueprint Reading"
+    "Interpretación de Planos": "Blueprint Reading",
+    "Estadística Aplicada": "Applied Statistics"
   },
   "orden_cursos": [
     "Estática",
@@ -29,7 +30,8 @@
     "Resistencia de Materiales I",
     "Mecánica de Materiales II",
     "Mecánica de Fluidos",
-    "Interpretación de Planos"
+    "Interpretación de Planos",
+    "Estadística Aplicada"
   ],
   "marca_agua": {
     "texto": "LINDEY",

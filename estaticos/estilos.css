@@ -387,6 +387,16 @@ a.chip--curso:hover { color: #fff; }
 .transcripcion h4 { font-size: 1rem; margin: 1.2rem 0 .4rem; }
 .transcripcion ul { margin: 0 0 1rem; padding-left: 1.2rem; }
 .transcripcion li { margin: .25rem 0; font-size: 1.04rem; }
+.tabla-datos { overflow-x: auto; margin: .4rem 0 1.2rem; -webkit-overflow-scrolling: touch; }
+.tabla-datos table { border-collapse: collapse; width: 100%; font-size: .95rem; min-width: 520px; }
+.tabla-datos th, .tabla-datos td { border: 1px solid #d5dde8; padding: .4rem .6rem; text-align: left; }
+.tabla-datos thead th { background: var(--marino); color: #fff; font-weight: 600; }
+.tabla-datos tbody tr:nth-child(even) { background: #f3f6fa; }
+.tabla-datos td:first-child, .tabla-datos th { white-space: nowrap; }
+@media (max-width: 560px) {
+  .tabla-datos table { font-size: .82rem; min-width: 560px; }
+  .tabla-datos th, .tabla-datos td { padding: .3rem .45rem; }
+}
 
 /* ------------------------------------------------------------ compartir */
 

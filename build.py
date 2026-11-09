@@ -585,7 +585,7 @@ def renderizar_paginas(ruta_pdf, slug, ruta_texto=None):
 
 
 def markdown_simple(texto):
-    """Convierte la transcripción (## títulos, párrafos, listas con -, **negrita**) a HTML."""
+    """Convierte la transcripción (## títulos, párrafos, listas con -, tablas con |, **negrita**) a HTML."""
     def en_linea(t):
         return re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", esc(t))
     salida = []
@@ -600,7 +600,17 @@ def markdown_simple(texto):
             lineas = lineas[1:]
             if not lineas:
                 continue
-        if all(l.startswith(("- ", "* ")) for l in lineas):
+        if all(l.startswith("|") for l in lineas):  # tabla: | a | b | (2.ª fila |---| = encabezado)
+            filas = [[c.strip() for c in l.strip("|").split("|")] for l in lineas]
+            cab = []
+            if len(filas) > 1 and all(re.fullmatch(r":?-{2,}:?", c) for c in filas[1] if c):
+                cab, filas = filas[0], filas[2:]
+            html = '<div class="tabla-datos"><table>'
+            if cab:
+                html += "<thead><tr>" + "".join(f"<th>{en_linea(c)}</th>" for c in cab) + "</tr></thead>"
+            html += "<tbody>" + "".join("<tr>" + "".join(f"<td>{en_linea(c)}</td>" for c in f) + "</tr>" for f in filas)
+            salida.append(html + "</tbody></table></div>")
+        elif all(l.startswith(("- ", "* ")) for l in lineas):
             salida.append("<ul>" + "".join(f"<li>{en_linea(l[2:])}</li>" for l in lineas) + "</ul>")
         elif lineas[0].startswith("Datos de la figura:"):
             salida.append('<p class="datos"><strong>Datos de la figura:</strong>' + en_linea(" ".join(lineas))[len("Datos de la figura:"):] + "</p>")
