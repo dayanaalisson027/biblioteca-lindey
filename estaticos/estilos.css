@@ -216,6 +216,7 @@ a.chip--curso:hover { color: #fff; }
   background: var(--papel); border: 1px solid var(--borde); border-left: 5px solid var(--lima);
 }
 .asesoria p { margin: 0; font-size: 1.02rem; color: var(--marino); }
+.asesoria strong { font-weight: 900; letter-spacing: .02em; margin-right: .35rem; }
 .asesoria a { font-weight: 800; color: var(--marino); text-decoration-color: var(--lima); text-decoration-thickness: 3px; }
 
 /* --------------------------------------------------------------- pie */
@@ -431,7 +432,7 @@ a.chip--curso:hover { color: #fff; }
   display: inline-flex; align-items: center; gap: .6rem;
   background: var(--lima); color: var(--marino-profundo);
   padding: .95rem 1.6rem; border-radius: 999px; font-weight: 900; font-size: 1.15rem; letter-spacing: .01em;
-  text-decoration: none; box-shadow: 0 10px 28px rgba(6, 15, 39, .35);
+  text-decoration: none; box-shadow: 0 10px 28px rgba(6, 15, 39, .35); white-space: nowrap;
   animation: latido 1.4s ease-in-out infinite;
 }
 .flotante svg { width: 28px; height: 28px; }
@@ -457,7 +458,8 @@ a.chip--curso:hover { color: #fff; }
   .marca__bib { display: none; }
   .buscador { flex-direction: column; }
   .buscador button { padding: .85rem; }
-  .flotante { right: .9rem; bottom: .9rem; padding: .85rem 1.3rem; font-size: 1.05rem; }
+  .flotante { right: .9rem; bottom: .9rem; padding: .8rem 1.15rem; font-size: .95rem; gap: .45rem; }
+  .flotante svg { width: 24px; height: 24px; }
   .carrusel__pista { grid-auto-columns: 62%; }
   .carrusel__btn { width: 38px; height: 38px; font-size: 1.5rem; }
   .carrusel__btn--prev { left: 4px; }

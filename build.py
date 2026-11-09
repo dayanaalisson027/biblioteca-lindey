@@ -70,7 +70,7 @@ TEXTOS = {
         "lang": "es", "locale": "es_PE", "biblioteca": "Biblioteca", "cursos": "Cursos",
         "universidades": "Universidades", "otro_idioma": "English", "otro_lang": "en",
         "pie": "Ejercicios universitarios de libre consulta, publicados por Lindey Asesoramiento Universitario.",
-        "asesoria": "Asesoría", "aria_asesoria": "Asesoría por WhatsApp", "necesitas": "¿Necesitas asesoría?",
+        "asesoria": "PIDE TU SOLUCIONARIO", "aria_asesoria": "Pide tu solucionario por WhatsApp", "necesitas": "PIDE TU SOLUCIONARIO",
         "compartir": "Compártelo con tus amigos", "copiar": "Copiar enlace", "mas_opciones": "Más opciones",
         "saltar": "Saltar al contenido", "inicio": "Biblioteca Lindey, inicio", "ruta": "Ruta",
         "anterior": "Anterior", "siguiente": "Siguiente", "principal": "Principal",
@@ -79,7 +79,7 @@ TEXTOS = {
         "lang": "en", "locale": "en_US", "biblioteca": "Library", "cursos": "Courses",
         "universidades": "Universities", "otro_idioma": "Español", "otro_lang": "es",
         "pie": "Free university engineering exercises, published by Lindey Asesoramiento Universitario (Peru).",
-        "asesoria": "Tutoring", "aria_asesoria": "Tutoring on WhatsApp", "necesitas": "Need help?",
+        "asesoria": "GET YOUR SOLUTION", "aria_asesoria": "Get your solution on WhatsApp", "necesitas": "GET YOUR SOLUTION",
         "compartir": "Share it with your friends", "copiar": "Copy link", "mas_opciones": "More options",
         "saltar": "Skip to content", "inicio": "Lindey Library, home", "ruta": "Breadcrumb",
         "anterior": "Previous", "siguiente": "Next", "principal": "Main",
@@ -206,7 +206,7 @@ def cargar_sitio():
     marca = sitio.setdefault("marca_agua", {})
     marca.setdefault("texto", "LINDEY")
     marca.setdefault("subtexto", f"Asesoramiento Universitario · WhatsApp {sitio['whatsapp_visible']}")
-    marca.setdefault("pie", f"Biblioteca Lindey · {sitio['dominio']} · ¿Necesitas asesoría? WhatsApp {sitio['whatsapp_visible']}")
+    marca.setdefault("pie", f"Biblioteca Lindey · {sitio['dominio']} · PIDE TU SOLUCIONARIO: WhatsApp {sitio['whatsapp_visible']}")
     marca.setdefault("proteger", True)
     contador = sitio.setdefault("contador_vistas", {})
     contador.setdefault("servicio", "https://abacus.jasoncameron.dev")
@@ -498,7 +498,7 @@ def marcar_pdf(origen, sitio, d):
         if escritor.is_encrypted:
             escritor._encryption = None
         sellos = {}
-        wa = enlace_whatsapp(sitio, f"Hola Lindey, vi el PDF «{d['titulo']}» y necesito asesoría.")
+        wa = enlace_whatsapp(sitio, f"Hola Lindey, vi el PDF «{d['titulo']}» y quiero pedir mi solucionario.")
         for i, hoja in enumerate(escritor.pages):
             if hoja.get("/Rotate", 0) % 360:
                 hoja.transfer_rotation_to_content()
@@ -701,8 +701,8 @@ def pagina(sitio, *, raiz, ruta, titulo, descripcion, contenido, imagen_social=N
     en = idioma == "en"
     canonical = f"{sitio['url']}/{ruta}"
     imagen_social = imagen_social or f"{sitio['url']}/og-biblioteca-lindey.jpg"
-    mensaje_wa = mensaje_wa or ("Hi Lindey, I found the Lindey Library and I need help." if en
-                                else "Hola Lindey, vi la Biblioteca Lindey y necesito asesoría.")
+    mensaje_wa = mensaje_wa or ("Hi Lindey, I found the Lindey Library and I'd like to get the solution." if en
+                                else "Hola Lindey, vi la Biblioteca Lindey y quiero pedir mi solucionario.")
     bloques_ld = "".join(
         f'\n<script type="application/ld+json">{json.dumps(b, ensure_ascii=False)}</script>'
         for b in (jsonld or [])
@@ -912,7 +912,7 @@ def figura(ej, campo, raiz, alt, carga="eager"):
 def asesoria(sitio, mensaje, idioma="es"):
     t = TEXTOS[idioma]
     return f"""<aside class="asesoria" aria-label="{t['asesoria']}">
-  <p>{t['necesitas']} <a href="{esc(enlace_whatsapp(sitio, mensaje))}" rel="noopener">WhatsApp {esc(sitio['whatsapp_visible'])}</a></p>
+  <p><strong>{t['necesitas']}</strong> <a href="{esc(enlace_whatsapp(sitio, mensaje))}" rel="noopener">WhatsApp {esc(sitio['whatsapp_visible'])}</a></p>
 </aside>"""
 
 
@@ -958,7 +958,7 @@ def pagina_ejercicio(sitio, ej, relacionados):
         contexto += f", {ej['universidad']}"
     descripcion = ej["descripcion"] or recortar(f"{contexto}: {ej['enunciado'].split(chr(10) * 2)[0]}")
     alt = f"Enunciado y figura: {ej['tema']} – {meta_ejercicio(ej)}"
-    mensaje = f"Hola Lindey, vi el ejercicio «{ej['tema']}» ({ej['curso']}) en la Biblioteca Lindey y necesito asesoría."
+    mensaje = f"Hola Lindey, vi el ejercicio «{ej['tema']}» ({ej['curso']}) en la Biblioteca Lindey y quiero pedir mi solucionario."
     url_abs = f"{sitio['url']}/{ej['url']}"
 
     chips = [f'<a class="chip chip--curso" href="{raiz}{ej["curso_slug"]}/">{esc(ej["curso"])}</a>']
@@ -1062,7 +1062,7 @@ def pagina_ejercicio_en(sitio, ej, relacionados):
     contexto = " – ".join(p for p in (ej["curso_en"], ej["universidad"], ej["etiqueta_en"]) if p)
     descripcion = recortar(f"{contexto}: {ej['enunciado_en'].split(chr(10) * 2)[0]}")
     alt = f"Problem statement and figure: {ej['tema_en']} – {meta_ejercicio(ej, True, 'en')}"
-    mensaje = f"Hi Lindey, I saw the exercise «{ej['tema_en']}» ({ej['curso_en']}) on the Lindey Library and I need help."
+    mensaje = f"Hi Lindey, I saw the exercise «{ej['tema_en']}» ({ej['curso_en']}) on the Lindey Library and I'd like to get the solution."
     url_abs = f"{sitio['url']}/{ej['url_en']}"
     curso_url = f"{raiz}en/{ej['curso_en_slug']}/"
 
@@ -1322,7 +1322,7 @@ def pagina_repositorio(sitio, ejercicios, documentos, cursos):
 
 def pagina_documento(sitio, d, cursos_con_pagina=()):
     raiz = "../../"
-    mensaje = f"Hola Lindey, vi el PDF «{d['titulo']}» en la Biblioteca Lindey y necesito asesoría."
+    mensaje = f"Hola Lindey, vi el PDF «{d['titulo']}» en la Biblioteca Lindey y quiero pedir mi solucionario."
     url_abs = f"{sitio['url']}/{d['url']}"
     # Los cursos que solo tienen PDFs (sin ejercicios) no tienen página propia: se enlaza su grupo en /pdfs/
     destino_curso = f"{raiz}{d['curso_slug']}/" if d["curso"] in cursos_con_pagina else f"{raiz}pdfs/#{d['curso_slug']}"
