@@ -512,3 +512,36 @@ a.chip--curso:hover { color: #fff; }
 .ordenar button[aria-busy="true"] { opacity: .6; cursor: progress; }
 #documentos .seccion__cabecera { flex-wrap: wrap; align-items: center; }
 #documentos h3 { scroll-margin-top: 1rem; }
+
+/* ------------------------------------------- banderitas de la portada */
+.paises { margin-top: 1.6rem; }
+.paises__titulo { color: #fff; font-weight: 700; font-size: .95rem; margin: 0 0 .7rem; }
+.paises__marco {
+  display: flex; overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
+}
+.paises__pista {
+  list-style: none; margin: 0; padding: .2rem .6rem .2rem 0; display: flex; gap: .6rem; flex: none;
+  animation: desfile 55s linear infinite;
+}
+.paises__marco:hover .paises__pista, .paises__marco:focus-within .paises__pista { animation-play-state: paused; }
+@keyframes desfile { to { transform: translateX(-100%); } }
+.pais {
+  display: inline-flex; align-items: center; gap: .5rem; white-space: nowrap;
+  padding: .45rem .9rem .45rem .55rem; border-radius: 999px; text-decoration: none;
+  background: rgba(255, 255, 255, .07); border: 1px solid rgba(175, 216, 248, .28);
+  color: #fff; font-weight: 700; font-size: .92rem;
+}
+.pais:hover, .pais:focus-visible { border-color: var(--lima); color: var(--lima); background: rgba(132, 255, 63, .08); }
+.pais__bandera {
+  display: inline-block; width: 27px; height: 18px; border-radius: 3px; overflow: hidden; flex: none;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, .35);
+}
+.pais__bandera svg { display: block; width: 100%; height: 100%; }
+.pais__bandera--vacia { background: var(--celeste-oscuro); }
+@media (prefers-reduced-motion: reduce) {
+  .paises__pista { animation: none; flex-wrap: wrap; flex: 1; }
+  .paises__pista--copia { display: none; }
+  .paises__marco { -webkit-mask-image: none; mask-image: none; }
+}

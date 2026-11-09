@@ -38,5 +38,26 @@
   "contador_vistas": {
     "servicio": "https://abacus.jasoncameron.dev",
     "espacio": "lindey-biblioteca-pdf"
-  }
+  },
+  "paises": [
+    "Perú",
+    "Chile",
+    "Ecuador",
+    "Uruguay",
+    "España",
+    "México",
+    "Argentina",
+    "Costa Rica",
+    "Colombia",
+    "Bolivia",
+    "Venezuela",
+    "Paraguay",
+    "Panamá",
+    "Guatemala",
+    "Honduras",
+    "El Salvador",
+    "Nicaragua",
+    "República Dominicana",
+    "Cuba"
+  ]
 }

@@ -649,6 +649,94 @@ def preparar_documento(sitio, d):
         d["descripcion"] = recortar(limpio or f"{d['tipo']} de {d['curso']} en PDF.", 158)
 
 
+# ------------------------------------------------------------- banderitas
+
+def _estrella(cx, cy, r, color):
+    puntos = []
+    for i in range(10):
+        radio = r if i % 2 == 0 else r * 0.4
+        ang = math.radians(-90 + i * 36)
+        puntos.append(f"{cx + radio * math.cos(ang):.2f},{cy + radio * math.sin(ang):.2f}")
+    return f'<polygon points="{" ".join(puntos)}" fill="{color}"/>'
+
+
+def _franjas(colores, vertical=False):
+    n = len(colores)
+    paso = (30 if vertical else 20) / n
+    if vertical:
+        return "".join(f'<rect x="{i * paso:.3f}" y="0" width="{paso + .05:.3f}" height="20" fill="{c}"/>' for i, c in enumerate(colores))
+    return "".join(f'<rect x="0" y="{i * paso:.3f}" width="30" height="{paso + .05:.3f}" fill="{c}"/>' for i, c in enumerate(colores))
+
+
+def _bandas(lista):
+    """lista de (color, alto) de arriba hacia abajo"""
+    y, salida = 0.0, ""
+    for color, alto in lista:
+        salida += f'<rect x="0" y="{y:.3f}" width="30" height="{alto + .05:.3f}" fill="{color}"/>'
+        y += alto
+    return salida
+
+
+# Banderas simplificadas (sin escudos) en 30 × 20
+BANDERAS = {
+    "chile": '<rect width="30" height="20" fill="#fff"/><rect y="10" width="30" height="10" fill="#D52B1E"/>'
+             '<rect width="10" height="10" fill="#0039A6"/>' + _estrella(5, 5, 3, "#fff"),
+    "ecuador": _bandas([("#FFDD00", 10), ("#034EA2", 5), ("#ED1C24", 5)]) + '<circle cx="15" cy="10" r="2.6" fill="#8C6A2E"/>',
+    "uruguay": "".join(f'<rect y="{i * 20 / 9:.3f}" width="30" height="{20 / 9 + .05:.3f}" fill="{"#fff" if i % 2 == 0 else "#0038A8"}"/>' for i in range(9))
+               + f'<rect width="11.5" height="{20 / 9 * 5:.3f}" fill="#fff"/><circle cx="5.7" cy="5.6" r="3" fill="#FCD116"/>',
+    "peru": _franjas(["#D91023", "#fff", "#D91023"], vertical=True),
+    "espana": _bandas([("#AA151B", 5), ("#F1BF00", 10), ("#AA151B", 5)]),
+    "mexico": _franjas(["#006847", "#fff", "#CE1126"], vertical=True) + '<circle cx="15" cy="10" r="2.6" fill="#8C5A2B"/>',
+    "argentina": _franjas(["#74ACDF", "#fff", "#74ACDF"]) + '<circle cx="15" cy="10" r="2.3" fill="#F6B40E"/>',
+    "costa-rica": _bandas([("#002B7F", 3.33), ("#fff", 3.33), ("#CE1126", 6.68), ("#fff", 3.33), ("#002B7F", 3.33)]),
+    "colombia": _bandas([("#FCD116", 10), ("#003893", 5), ("#CE1126", 5)]),
+    "bolivia": _franjas(["#D52B1E", "#F9E300", "#007934"]),
+    "venezuela": _franjas(["#FFCC00", "#00247D", "#CF142B"])
+                 + "".join(f'<circle cx="{15 + 6.2 * math.cos(math.radians(a)):.2f}" cy="{12.6 - 4.4 * math.sin(math.radians(a)):.2f}" r=".75" fill="#fff"/>'
+                           for a in (160, 140, 120, 100, 80, 60, 40, 20)),
+    "paraguay": _franjas(["#D52B1E", "#fff", "#0038A8"]) + '<circle cx="15" cy="10" r="2" fill="none" stroke="#2E7D32" stroke-width=".8"/>',
+    "panama": '<rect width="30" height="20" fill="#fff"/><rect x="15" width="15" height="10" fill="#DA121A"/>'
+              '<rect y="10" width="15" height="10" fill="#072357"/>' + _estrella(7.5, 5, 2.8, "#072357") + _estrella(22.5, 15, 2.8, "#DA121A"),
+    "guatemala": _franjas(["#4997D0", "#fff", "#4997D0"], vertical=True) + '<circle cx="15" cy="10" r="2.4" fill="#6DA544"/>',
+    "honduras": _franjas(["#18C3DF", "#fff", "#18C3DF"])
+                + "".join(f'<circle cx="{x}" cy="{y}" r=".9" fill="#18C3DF"/>' for x, y in ((15, 10), (11, 8.4), (11, 11.6), (19, 8.4), (19, 11.6))),
+    "el-salvador": _franjas(["#0F47AF", "#fff", "#0F47AF"]) + '<circle cx="15" cy="10" r="2.2" fill="#FFCC00"/>',
+    "nicaragua": _franjas(["#0067C6", "#fff", "#0067C6"]) + '<circle cx="15" cy="10" r="2.2" fill="none" stroke="#0067C6" stroke-width=".8"/>',
+    "republica-dominicana": '<rect width="30" height="20" fill="#fff"/><rect width="13" height="8.5" fill="#002D62"/>'
+                            '<rect x="17" width="13" height="8.5" fill="#CE1126"/><rect y="11.5" width="13" height="8.5" fill="#CE1126"/>'
+                            '<rect x="17" y="11.5" width="13" height="8.5" fill="#002D62"/>',
+    "cuba": "".join(f'<rect y="{i * 4}" width="30" height="4.05" fill="{"#002A8F" if i % 2 == 0 else "#fff"}"/>' for i in range(5))
+            + '<polygon points="0,0 15,10 0,20" fill="#CF142B"/>' + _estrella(5, 10, 2.8, "#fff"),
+}
+
+
+def bandera(pais):
+    figura = BANDERAS.get(slugify(pais))
+    if not figura:
+        return '<span class="pais__bandera pais__bandera--vacia" aria-hidden="true"></span>'
+    return (f'<span class="pais__bandera" aria-hidden="true"><svg viewBox="0 0 30 20" width="27" height="18" '
+            f'preserveAspectRatio="none">{figura}</svg></span>')
+
+
+def franja_paises(sitio):
+    """Banderitas que desfilan en la portada; cada una abre WhatsApp con el país en el mensaje."""
+    paises = sitio.get("paises") or []
+    if not paises:
+        return ""
+    def items(oculto):
+        extra = ' tabindex="-1"' if oculto else ""
+        return "".join(
+            f'<li><a class="pais" href="{esc(enlace_whatsapp(sitio, f"Hola Lindey, soy de {p} y quiero pedir mi solucionario."))}" '
+            f'rel="noopener"{extra}>{bandera(p)}<span>{esc(p)}</span></a></li>' for p in paises)
+    return f"""<div class="paises">
+      <p class="paises__titulo">Atendemos estudiantes de toda Latinoamérica y España</p>
+      <div class="paises__marco">
+        <ul class="paises__pista" aria-label="Países que atendemos">{items(False)}</ul>
+        <ul class="paises__pista paises__pista--copia" aria-hidden="true">{items(True)}</ul>
+      </div>
+    </div>"""
+
+
 # --------------------------------------------------------------- piezas HTML
 
 ICONO_CHAT = (
@@ -811,7 +899,7 @@ def pie_de_pagina(sitio, t, raiz, en, wa, enlaces):
     </div>{bloques}
   </div>
   <div class="envoltura pie__base">
-    <p>© {date.today().year} Lindey Asesoramiento Universitario · {esc(sitio['dominio'])} · {t['derechos']}</p>
+    <p>© {date.today().year} Lindey Asesoramiento Universitario · {t['derechos']}</p>
   </div>
 </footer>"""
 
@@ -1451,6 +1539,7 @@ def pagina_portada(sitio, ejercicios, documentos, cursos, universidades):
       <button type="submit">Buscar</button>
     </form>
     <p class="portada__cifras">{len(ejercicios)} ejercicios · {len(cursos)} cursos · {len(propios)} documentos PDF</p>
+    {franja_paises(sitio)}
   </div>
 </section>
 <div class="envoltura">
