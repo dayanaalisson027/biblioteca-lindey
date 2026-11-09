@@ -12,8 +12,7 @@ Lee:
     estaticos/          estilos, scripts, logo e imagen para redes
 
 Genera además:
-    - un PDF por ejercicio (enunciado + imagen)
-    - un "Banco de ejercicios" en PDF por curso
+    (los ejercicios se publican como imagen + texto; solo los PDF que subes a pdfs/ son PDF)
     - las páginas de cada PDF como imágenes para el visor tipo revista
     - la marca de agua Lindey en cada documento propio (PDF descargable y páginas del visor)
 
@@ -270,7 +269,6 @@ def leer_ejercicio(ruta, sitio):
         "enunciado": enunciado,
     }
     ej["url"] = f"{ej['curso_slug']}/{slug}/"
-    ej["pdf_url"] = f"pdfs/ejercicios/{slug}.pdf"
     for campo, sufijo in (("imagen", ""), ("solucion_imagen", "-solucion")):
         nombre = ej[campo]
         if not nombre:
@@ -410,234 +408,12 @@ def pdf_cadena(texto):
     return b"(" + datos.replace(b"\\", b"\\\\").replace(b"(", b"\\(").replace(b")", b"\\)") + b")"
 
 
-def pdf_info_cadena(texto):
-    return b"<FEFF" + texto.encode("utf-16-be").hex().upper().encode() + b">"
-
-
 def ancho_pdf(texto, tam, negrita=False):
     total = 0
     for c in pdf_plano(texto):
         base = unicodedata.normalize("NFKD", c)[:1] or c
         total += ANCHOS_HELVETICA.get(base, 556)
     return total * tam / 1000 * (1.07 if negrita else 1)
-
-
-def envolver_pdf(texto, tam, ancho_max, negrita=False):
-    lineas, actual = [], ""
-    for palabra in texto.split():
-        prueba = f"{actual} {palabra}".strip()
-        if not actual or ancho_pdf(prueba, tam, negrita) <= ancho_max:
-            actual = prueba
-        else:
-            lineas.append(actual)
-            actual = palabra
-    if actual:
-        lineas.append(actual)
-    return lineas
-
-
-def bytes_jpeg(ej):
-    """Devuelve (bytes, ancho, alto, espacio_color) de la imagen para incrustar, o None."""
-    ancho, alto, comp, es_jpeg = ej["imagen_info"]
-    if es_jpeg and ancho and comp in (1, 3):
-        return ej["imagen_origen"].read_bytes(), ancho, alto, "/DeviceGray" if comp == 1 else "/DeviceRGB"
-    if Image is not None:
-        import io
-        with Image.open(ej["imagen_origen"]) as im:
-            im = im.convert("RGB")
-            salida = io.BytesIO()
-            im.save(salida, "JPEG", quality=88)
-            return salida.getvalue(), im.width, im.height, "/DeviceRGB"
-    return None
-
-
-class DocumentoPDF:
-    """Escritor mínimo de PDF (A4, Helvetica, imágenes JPEG y enlaces)."""
-    ANCHO, ALTO, M = 595.0, 842.0, 48.0
-
-    def __init__(self):
-        self.paginas = []
-        self.imagenes = []
-
-    def imagen(self, datos):
-        self.imagenes.append(datos)
-        return f"Im{len(self.imagenes)}"
-
-    def pagina(self):
-        p = {"ops": [], "links": [], "imgs": []}
-        self.paginas.append(p)
-        return p
-
-    @staticmethod
-    def texto(p, x, y, texto, fuente, tam, color):
-        p["ops"].append(f"BT /{fuente} {tam} Tf {COLORES[color]} rg {x:.2f} {y:.2f} Td ".encode()
-                        + pdf_cadena(texto) + b" Tj ET")
-
-    @staticmethod
-    def rect(p, x, y, ancho, alto, color):
-        p["ops"].append(f"{COLORES[color]} rg {x:.2f} {y:.2f} {ancho:.2f} {alto:.2f} re f".encode())
-
-    @staticmethod
-    def dibujar(p, nombre, x, y, ancho, alto):
-        p["ops"].append(f"q {ancho:.2f} 0 0 {alto:.2f} {x:.2f} {y:.2f} cm /{nombre} Do Q".encode())
-        if nombre not in p["imgs"]:
-            p["imgs"].append(nombre)
-
-    def a_bytes(self, titulo, asunto, claves):
-        objetos = [None] * 5
-        objetos[2] = b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>"
-        objetos[3] = b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>"
-        objetos[4] = (b"<< /Title " + pdf_info_cadena(titulo)
-                      + b" /Author " + pdf_info_cadena("Lindey Asesoramiento Universitario")
-                      + b" /Subject " + pdf_info_cadena(asunto)
-                      + b" /Keywords " + pdf_info_cadena(claves)
-                      + b" /Creator " + pdf_info_cadena("Biblioteca Lindey") + b" >>")
-        for datos, iw, ih, espacio in self.imagenes:
-            objetos.append((f"<< /Type /XObject /Subtype /Image /Width {iw} /Height {ih} /ColorSpace {espacio} "
-                            f"/BitsPerComponent 8 /Filter /DCTDecode /Length {len(datos)} >>\nstream\n").encode()
-                           + datos + b"\nendstream")
-        kids = []
-        for pag in self.paginas:
-            contenido = zlib.compress(b"\n".join(pag["ops"]))
-            n_pag, n_cont = len(objetos) + 1, len(objetos) + 2
-            kids.append(f"{n_pag} 0 R")
-            anotaciones = b" ".join(
-                f"<< /Type /Annot /Subtype /Link /Rect [{a:.2f} {b:.2f} {c:.2f} {d:.2f}] /Border [0 0 0] /A << /S /URI /URI ".encode()
-                + b"(" + uri.encode("ascii").replace(b"(", b"\\(").replace(b")", b"\\)") + b") >> >>"
-                for a, b, c, d, uri in pag["links"])
-            xobjetos = " ".join(f"/{n} {5 + int(n[2:])} 0 R" for n in pag["imgs"])
-            recursos = (b"<< /Font << /F1 3 0 R /F2 4 0 R >>"
-                        + (f" /XObject << {xobjetos} >>".encode() if xobjetos else b"") + b" >>")
-            objetos.append(f"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 {self.ANCHO:g} {self.ALTO:g}] /Contents {n_cont} 0 R /Resources ".encode()
-                           + recursos + b" /Annots [" + anotaciones + b"] >>")
-            objetos.append(f"<< /Length {len(contenido)} /Filter /FlateDecode >>\nstream\n".encode() + contenido + b"\nendstream")
-        objetos[0] = b"<< /Type /Catalog /Pages 2 0 R /Lang (es) >>"
-        objetos[1] = f"<< /Type /Pages /Kids [{' '.join(kids)}] /Count {len(kids)} >>".encode()
-
-        salida = bytearray(b"%PDF-1.4\n%\xe2\xe3\xcf\xd3\n")
-        posiciones = []
-        for i, cuerpo in enumerate(objetos, start=1):
-            posiciones.append(len(salida))
-            salida += f"{i} 0 obj\n".encode() + cuerpo + b"\nendobj\n"
-        inicio_xref = len(salida)
-        salida += f"xref\n0 {len(objetos) + 1}\n0000000000 65535 f \n".encode()
-        for pos in posiciones:
-            salida += f"{pos:010d} 00000 n \n".encode()
-        salida += f"trailer\n<< /Size {len(objetos) + 1} /Root 1 0 R /Info 5 0 R >>\nstartxref\n{inicio_xref}\n%%EOF\n".encode()
-        return bytes(salida)
-
-
-def pagina_con_encabezado(doc, sitio, wa, url_pagina):
-    A, H, M = doc.ANCHO, doc.ALTO, doc.M
-    p = doc.pagina()
-    doc.rect(p, 0, H - 64, A, 64, "marino")
-    doc.texto(p, M, H - 34, "BIBLIOTECA LINDEY", "F2", 14, "lima")
-    doc.texto(p, M, H - 48, "Lindey Asesoramiento Universitario", "F1", 8.5, "celeste")
-    etiqueta = f"WhatsApp {sitio['whatsapp_visible']}"
-    x = A - M - ancho_pdf(etiqueta, 11, True)
-    doc.texto(p, x, H - 38, etiqueta, "F2", 11, "lima")
-    p["links"].append((x - 4, H - 46, A - M + 4, H - 26, wa))
-    pie = f"Biblioteca Lindey · {url_pagina}"
-    doc.texto(p, M, 28, pie, "F1", 8, "gris")
-    p["links"].append((M, 24, M + ancho_pdf(pie, 8), 36, url_pagina))
-    return p
-
-
-def agregar_ejercicio_pdf(doc, sitio, ej):
-    """Agrega al PDF las páginas de un ejercicio: título, enunciado, asesoría e imagen."""
-    A, H, M = doc.ANCHO, doc.ALTO, doc.M
-    util = A - 2 * M
-    wa = enlace_whatsapp(sitio, f"Hola Lindey, vi el ejercicio «{ej['tema']}» ({ej['curso']}) en la Biblioteca Lindey y necesito asesoría.")
-    url_pagina = f"{sitio['url']}/{ej['url']}"
-    p = pagina_con_encabezado(doc, sitio, wa, url_pagina)
-    y = H - 64 - 40
-    for linea in envolver_pdf(ej["tema"], 20, util, True):
-        doc.texto(p, M, y, linea, "F2", 20, "marino_medio")
-        y -= 24
-    doc.texto(p, M, y + 4, meta_ejercicio(ej), "F1", 10, "celeste_osc")
-    y -= 22
-    p["ops"].append(f"{COLORES['celeste']} RG 0.8 w {M} {y + 8} m {A - M} {y + 8} l S".encode())
-    y -= 10
-    doc.texto(p, M, y, "ENUNCIADO", "F2", 9, "celeste_osc")
-    y -= 17
-    for parrafo in re.split(r"\n\s*\n", ej["enunciado"]):
-        parrafo = " ".join(parrafo.split())
-        gris = parrafo.startswith("Datos de la figura:")
-        for linea in envolver_pdf(parrafo, 10.5, util):
-            if y < 90:
-                p = pagina_con_encabezado(doc, sitio, wa, url_pagina)
-                y = H - 64 - 36
-            doc.texto(p, M, y, linea, "F1", 10.5, "gris" if gris else "texto")
-            y -= 15
-        y -= 6
-
-    y -= 4
-    cta_a, cta_b = "¿Necesitas asesoría? ", f"WhatsApp {sitio['whatsapp_visible']}"
-    doc.rect(p, M, y - 10, util, 28, "fondo_cta")
-    doc.rect(p, M, y - 10, 4, 28, "lima")
-    doc.texto(p, M + 14, y, cta_a, "F1", 11, "texto")
-    doc.texto(p, M + 14 + ancho_pdf(cta_a, 11), y, cta_b, "F2", 11, "marino_medio")
-    p["links"].append((M, y - 10, M + util, y + 18, wa))
-    y -= 30
-
-    imagen = bytes_jpeg(ej)
-    if imagen:
-        _, iw, ih, _ = imagen
-        disponible = y - 52
-        if disponible < 330:
-            p = pagina_con_encabezado(doc, sitio, wa, url_pagina)
-            disponible = H - 64 - 30 - 52
-            y = H - 64 - 24
-        escala = min(util / iw, disponible / ih)
-        dw, dh = iw * escala, ih * escala
-        doc.dibujar(p, doc.imagen(imagen), (A - dw) / 2, y - dh, dw, dh)
-
-
-def pdf_ejercicio(sitio, ej):
-    doc = DocumentoPDF()
-    agregar_ejercicio_pdf(doc, sitio, ej)
-    return doc.a_bytes(f"{ej['tema']} – {ej['curso']}", recortar(ej["enunciado"], 240),
-                       ", ".join([ej["curso"], ej["tema"]] + ej["palabras"]))
-
-
-def pdf_banco(sitio, curso, ejercicios, url_pagina):
-    """Banco de ejercicios de un curso: portada + todos sus ejercicios."""
-    doc = DocumentoPDF()
-    A, H, M = doc.ANCHO, doc.ALTO, doc.M
-    wa = enlace_whatsapp(sitio, f"Hola Lindey, vi el banco de ejercicios de {curso} en la Biblioteca Lindey y necesito asesoría.")
-    p = doc.pagina()
-    doc.rect(p, 0, 0, A, H, "marino")
-    doc.rect(p, 0, H - 8, A, 8, "lima")
-    doc.texto(p, M, H - 80, "BIBLIOTECA LINDEY", "F2", 18, "lima")
-    doc.texto(p, M, H - 100, "Lindey Asesoramiento Universitario", "F1", 11, "celeste")
-    doc.rect(p, M, H - 330, 8, 150, "lima")
-    doc.texto(p, M + 26, H - 205, "BANCO DE EJERCICIOS", "F2", 14, "celeste")
-    y = H - 250
-    for linea in envolver_pdf(curso, 40, A - 2 * M - 30, True):
-        doc.texto(p, M + 26, y, linea, "F2", 40, "blanco")
-        y -= 46
-    doc.texto(p, M + 26, y - 4, f"{len(ejercicios)} ejercicios con enunciado completo y figura", "F1", 13, "celeste")
-    y = H - 420
-    doc.texto(p, M, y, "CONTENIDO", "F2", 10, "lima")
-    y -= 20
-    for i, e in enumerate(ejercicios, 1):
-        if y < 150:
-            doc.texto(p, M, y, f"… y {len(ejercicios) - i + 1} ejercicios más", "F1", 10.5, "celeste")
-            break
-        linea = f"{i}. {e['tema']}" + (f" ({e['universidad']})" if e["universidad"] else "")
-        doc.texto(p, M, y, envolver_pdf(linea, 11, A - 2 * M)[0], "F1", 11, "blanco")
-        y -= 17
-    doc.rect(p, M, 70, A - 2 * M, 46, "marino_medio")
-    doc.texto(p, M + 16, 98, "¿Necesitas asesoría?", "F1", 11, "celeste")
-    doc.texto(p, M + 16, 80, f"WhatsApp {sitio['whatsapp_visible']}", "F2", 15, "lima")
-    p["links"].append((M, 70, A - M, 116, wa))
-    doc.texto(p, M, 40, url_pagina, "F1", 8.5, "celeste")
-    p["links"].append((M, 36, M + ancho_pdf(url_pagina, 8.5), 48, url_pagina))
-    for e in ejercicios:
-        agregar_ejercicio_pdf(doc, sitio, e)
-    return doc.a_bytes(f"Banco de ejercicios de {curso} – Biblioteca Lindey",
-                       f"{len(ejercicios)} ejercicios de {curso}: " + ", ".join(e["tema"] for e in ejercicios),
-                       ", ".join([curso] + [e["tema"] for e in ejercicios]))
 
 
 # --------------------------------------------------- páginas de los documentos
@@ -844,26 +620,20 @@ def preparar_documento(sitio, d):
     """Copia el PDF al sitio, genera sus páginas y arma la transcripción."""
     destino = SALIDA / d["pdf_url"]
     destino.parent.mkdir(parents=True, exist_ok=True)
-    para_visor = original = destino
-    if d.get("pdf_bytes") is not None:
-        destino.write_bytes(d["pdf_bytes"])
+    original = para_visor = convertir_a_pdf(d["origen"])
+    marcado = marcar_pdf(original, sitio, d)
+    if marcado:
+        para_visor = Path(tempfile.mkdtemp(prefix="lindey-")) / "visor.pdf"
+        para_visor.write_bytes(marcado[0])
+        destino.write_bytes(marcado[1])
+        d["con_marca"] = True
     else:
-        original = convertir_a_pdf(d["origen"])
-        marcado = marcar_pdf(original, sitio, d)
-        if marcado:
-            para_visor = Path(tempfile.mkdtemp(prefix="lindey-")) / "visor.pdf"
-            para_visor.write_bytes(marcado[0])
-            destino.write_bytes(marcado[1])
-            d["con_marca"] = True
-        else:
-            shutil.copy2(original, destino)
+        shutil.copy2(original, destino)
     d["bytes"] = destino.stat().st_size
     d["paginas"], textos = renderizar_paginas(para_visor, d["slug"], original)
     d["n_paginas"] = len(d["paginas"])
     d["portada"] = d["paginas"][0] if d["paginas"] else None
-    if d.get("contenido_html"):
-        pass
-    elif d.get("cuerpo"):
+    if d.get("cuerpo"):
         d["contenido_html"] = markdown_simple(d["cuerpo"])
         d["texto_plano"] = d["cuerpo"]
     elif any(textos):
@@ -875,32 +645,6 @@ def preparar_documento(sitio, d):
     if not d["descripcion"]:
         limpio = re.sub(r"^#+\s.*$", "", d["texto_plano"], flags=re.M)
         d["descripcion"] = recortar(limpio or f"{d['tipo']} de {d['curso']} en PDF.", 158)
-
-
-def bancos_de_ejercicios(sitio, ejercicios, cursos):
-    bancos = []
-    for curso in cursos:
-        del_curso = [e for e in ejercicios if e["curso"] == curso]
-        slug = f"banco-de-ejercicios-{slugify(curso)}"
-        url = f"pdfs/{slug}/"
-        contenido = []
-        for e in del_curso:
-            contenido.append(f'<h3><a href="../../{e["url"]}">{esc(e["tema"])}</a> <small>{esc(meta_ejercicio(e, False))}</small></h3>'
-                             + parrafos(e["enunciado"]))
-        bancos.append({
-            "archivo": "(automático)", "slug": slug, "auto": True,
-            "titulo": f"Banco de ejercicios de {curso}", "curso": curso, "curso_slug": slugify(curso),
-            "universidad": "", "universidad_nombre": "", "tipo": "Banco de ejercicios",
-            "fecha": max(e["fecha"] for e in del_curso),
-            "palabras": [e["tema"] for e in del_curso],
-            "descripcion": recortar(f"{len(del_curso)} ejercicios de {curso} en un solo PDF, con enunciado completo y figura: "
-                                    + ", ".join(e["tema"].lower() for e in del_curso) + "."),
-            "contenido_html": "\n".join(contenido),
-            "texto_plano": "\n\n".join(f"{e['tema']}\n{e['enunciado']}" for e in del_curso),
-            "pdf_bytes": pdf_banco(sitio, curso, del_curso, f"{sitio['url']}/{url}"),
-            "url": url, "pdf_url": f"pdfs/archivos/{slug}.pdf",
-        })
-    return bancos
 
 
 # --------------------------------------------------------------- piezas HTML
@@ -1205,7 +949,7 @@ def visor_libro(d, raiz):
 
 # ------------------------------------------------------------------- páginas
 
-def pagina_ejercicio(sitio, ej, relacionados, banco):
+def pagina_ejercicio(sitio, ej, relacionados):
     raiz = "../../"
     uni_txt = f" ({ej['universidad']})" if ej["universidad"] else ""
     titulo = f"{ej['tema']} – {ej['curso']}{uni_txt} | {sitio['nombre']}"
@@ -1238,10 +982,6 @@ def pagina_ejercicio(sitio, ej, relacionados, banco):
   <figure class="figura">{figura(ej, "solucion_imagen", raiz, "Solución paso a paso: " + ej["tema"], "lazy")}</figure>
 </section>"""
 
-    enlace_banco = ""
-    if banco:
-        enlace_banco = f'<a class="boton boton--suave" href="{raiz}{banco["url"]}">Todos los de {esc(ej["curso"])} en PDF</a>'
-
     mas = ""
     if relacionados:
         mas = f"""<section class="bloque" aria-labelledby="t-mas">
@@ -1266,9 +1006,7 @@ def pagina_ejercicio(sitio, ej, relacionados, banco):
       {parrafos(ej['enunciado'])}
       {palabras}
       <p class="acciones">
-        <a class="boton boton--pdf" href="{raiz}{ej['pdf_url']}" download>{ICONO_PDF}Descargar PDF</a>
         <a class="boton boton--suave" href="{raiz}{ej['imagen_url']}">Ver imagen completa</a>
-        {enlace_banco}
       </p>
       {compartir(url_abs, f"Mira este ejercicio de {ej['curso']}: {ej['tema']}")}
     </section>
@@ -1299,8 +1037,6 @@ def pagina_ejercicio(sitio, ej, relacionados, banco):
         "keywords": ", ".join([ej["curso"], ej["tema"]] + ej["palabras"]),
         "image": imagen_abs,
         "url": url_abs,
-        "encoding": {"@type": "MediaObject", "contentUrl": f"{sitio['url']}/{ej['pdf_url']}",
-                     "encodingFormat": "application/pdf"},
         "datePublished": ej["fecha"],
         "isAccessibleForFree": True,
         "isPartOf": {"@type": "Course", "name": ej["curso"], "url": f"{sitio['url']}/{ej['curso_slug']}/",
@@ -1369,7 +1105,6 @@ def pagina_ejercicio_en(sitio, ej, relacionados):
       {parrafos(ej['enunciado_en'])}
       {palabras}
       <p class="acciones">
-        <a class="boton boton--pdf" href="{raiz}{ej['pdf_url']}" download>{ICONO_PDF}Download PDF (Spanish)</a>
         <a class="boton boton--suave" href="{raiz}{ej['imagen_url']}">View full image</a>
         <a class="boton boton--suave" href="{raiz}{ej['url']}" hreflang="es" lang="es">Ver en español</a>
       </p>
@@ -1414,7 +1149,7 @@ def pagina_curso_en(sitio, curso, ejercicios):
 <header class="encabezado">
   <p class="antetitulo">Course</p>
   <h1>{esc(curso_en)} exercises</h1>
-  <p class="bajada">{len(ejercicios)} {"exercise" if len(ejercicios) == 1 else "exercises"} with full problem statement, figure and PDF. Tap an exercise to open it.</p>
+  <p class="bajada">{len(ejercicios)} {"exercise" if len(ejercicios) == 1 else "exercises"} with full problem statement and figure. Tap an exercise to open it.</p>
 </header>
 {grilla(ejercicios, raiz, con_curso=False, idioma="en")}
 </div>"""
@@ -1445,7 +1180,7 @@ def pagina_portada_en(sitio, ejercicios, cursos):
     contenido = f"""<section class="portada">
   <div class="envoltura">
     <h1>{esc(sitio['nombre_en'])}</h1>
-    <p class="portada__bajada">University engineering exercises with full problem statement, figure and PDF — free to browse. Search by topic or course, or paste part of the problem statement.</p>
+    <p class="portada__bajada">University engineering exercises with full problem statement and figure — free to browse. Search by topic or course, or paste part of the problem statement.</p>
     <form class="buscador" id="buscar" role="search" action="./" method="get" data-indice="buscar-en.json">
       <label class="oculto" for="q">Search exercises</label>
       <input id="q" name="q" type="search" autocomplete="off" placeholder="E.g.: combined footing, buckling, conjugate beam…">
@@ -1476,7 +1211,7 @@ def pagina_curso(sitio, curso, ejercicios, documentos):
     uni_txt = f" de {', '.join(unis)}" if unis else ""
     titulo = f"Ejercicios de {curso} con enunciado y figura | {sitio['nombre']}"
     descripcion = recortar(
-        f"{len(ejercicios)} ejercicios universitarios de {curso}{uni_txt} con enunciado completo en texto, figura y PDF: "
+        f"{len(ejercicios)} ejercicios universitarios de {curso}{uni_txt} con enunciado completo en texto y figura: "
         + ", ".join(e["tema"].lower() for e in ejercicios[:6]) + ".")
     docs = ""
     if documentos:
@@ -1486,7 +1221,7 @@ def pagina_curso(sitio, curso, ejercicios, documentos):
 <header class="encabezado">
   <p class="antetitulo">Curso</p>
   <h1>Ejercicios de {esc(curso)}</h1>
-  <p class="bajada">{len(ejercicios)} {"ejercicio" if len(ejercicios) == 1 else "ejercicios"} con enunciado completo, figura y PDF. Toca un ejercicio para verlo.</p>
+  <p class="bajada">{len(ejercicios)} {"ejercicio" if len(ejercicios) == 1 else "ejercicios"} con enunciado completo y figura. Toca un ejercicio para verlo.</p>
 </header>
 {grilla(ejercicios, raiz, con_curso=False)}
 {docs}
@@ -1509,7 +1244,7 @@ def pagina_universidad(sitio, sigla, ejercicios):
     titulo = f"Ejercicios de la {sigla}{' – ' + nombre if nombre else ''} | {sitio['nombre']}"
     cursos = sorted({e["curso"] for e in ejercicios}, key=lambda c: orden_curso(sitio, c))
     descripcion = recortar(
-        f"Ejercicios universitarios de la {nombre_largo}: {', '.join(cursos)}. Enunciado completo, figura y PDF.")
+        f"Ejercicios universitarios de la {nombre_largo}: {', '.join(cursos)}. Enunciado completo y figura.")
     grupos = []
     for curso in cursos:
         del_curso = [e for e in ejercicios if e["curso"] == curso]
@@ -1548,21 +1283,9 @@ def pagina_indice(sitio, ejercicios, cursos):
                   contenido=contenido, jsonld=[migas_jsonld(sitio, [("Todos los ejercicios", "ejercicios/")])])
 
 
-def lista_pdfs_ejercicios(ejercicios, raiz):
-    filas = []
-    for e in ejercicios:
-        filas.append(f"""<li class="doc">
-  <span class="doc__icono">{ICONO_PDF}</span>
-  <span class="doc__texto"><a class="doc__titulo" href="{raiz}{e['url']}">{esc(e['tema'])}</a><span class="doc__meta">{esc(meta_ejercicio(e, False) or e['curso'])} · Enunciado + figura</span></span>
-  <a class="boton boton--pdf boton--chico" href="{raiz}{e['pdf_url']}" download>PDF</a>
-</li>""")
-    return '<ul class="docs">' + "".join(filas) + "</ul>"
-
-
 def pagina_repositorio(sitio, ejercicios, documentos, cursos):
     raiz = "../"
     propios = [d for d in documentos if not d["auto"]]
-    bancos = [d for d in documentos if d["auto"]]
     secciones = []
     if propios:
         cursos_docs = sorted({d["curso"] for d in propios}, key=lambda c: orden_curso(sitio, c))
@@ -1580,11 +1303,8 @@ def pagina_repositorio(sitio, ejercicios, documentos, cursos):
   <div class="documentos__grupos">{grupos}</div>
   <ul class="fichas fichas--docs documentos__plano" hidden></ul>
 </section>""")
-    if bancos:
-        secciones.append(f'<section class="bloque" id="bancos"><h2>Bancos de ejercicios por curso</h2>{grilla_documentos(bancos, raiz)}</section>')
-    grupos = "".join(
-        f'<h3>{esc(c)}</h3>{lista_pdfs_ejercicios([e for e in ejercicios if e["curso"] == c], raiz)}' for c in cursos)
-    secciones.append(f'<section class="bloque" id="ejercicios-pdf"><h2>Cada ejercicio en PDF</h2>{grupos}</section>')
+    if not propios:
+        secciones.append('<p class="bajada">Pronto habrá documentos aquí.</p>')
     contenido = f"""<div class="envoltura">
 {migas(raiz, [("Repositorio de PDFs", None)])}
 <header class="encabezado">
@@ -1595,7 +1315,8 @@ def pagina_repositorio(sitio, ejercicios, documentos, cursos):
 {"".join(secciones)}
 </div>"""
     return pagina(sitio, raiz=raiz, ruta="pdfs/", titulo=f"Repositorio de PDFs de ingeniería | {sitio['nombre']}",
-                  descripcion=recortar(f"Lee en línea o descarga en PDF ejercicios universitarios de {', '.join(cursos)}, con su contenido transcrito."),
+                  descripcion=recortar("Lee en línea como una revista o descarga en PDF exámenes, tareas y prácticas universitarias de "
+                                       + ", ".join(sorted({d["curso"] for d in propios}) or cursos) + ", con su contenido transcrito."),
                   contenido=contenido, jsonld=[migas_jsonld(sitio, [("Repositorio de PDFs", "pdfs/")])])
 
 
@@ -1664,7 +1385,7 @@ def pagina_portada(sitio, ejercicios, documentos, cursos, universidades):
         chips_uni.append(
             f'<li><a class="uni" href="universidad/{slugify(sigla)}/"><strong>{esc(sigla)}</strong>'
             f'{f"<span>{esc(nombre)}</span>" if nombre else ""}<em>{n}</em></a></li>')
-    # Solo los PDF subidos por Lindey (los bancos automáticos quedan en el repositorio)
+    # Solo los PDF subidos por Lindey (los ejercicios se publican como imagen + texto)
     propios = [d for d in documentos if not d["auto"]]
     seccion_docs = ""
     if propios:
@@ -1679,7 +1400,7 @@ def pagina_portada(sitio, ejercicios, documentos, cursos, universidades):
     contenido = f"""<section class="portada">
   <div class="envoltura">
     <h1>Biblioteca Lindey</h1>
-    <p class="portada__bajada">Ejercicios universitarios de ingeniería con su enunciado completo, figura y PDF, de libre consulta. Busca por tema, curso, universidad o pega parte del enunciado.</p>
+    <p class="portada__bajada">Ejercicios universitarios de ingeniería con su enunciado completo y figura, de libre consulta. También PDFs para leer y descargar. Busca por tema, curso, universidad o pega parte del enunciado.</p>
     <form class="buscador" id="buscar" role="search" action="./" method="get">
       <label class="oculto" for="q">Buscar ejercicio</label>
       <input id="q" name="q" type="search" autocomplete="off" placeholder="Ej.: zapata combinada, pandeo, viga conjugada…">
@@ -1775,7 +1496,6 @@ def sitemap(sitio, ejercicios, documentos, cursos, universidades):
         filas.append((f"{u}/{e['url']}", e["fecha"], imagenes, alt))
         if alt:
             filas.append((alt["en"], e["fecha"], imagenes, alt))
-        filas.append((f"{u}/{e['pdf_url']}", e["fecha"], None, None))
     for d in documentos:
         imagenes = [f"{u}/{p['i']}" for p in d.get("paginas", [])[:50]]
         filas.append((f"{u}/{d['url']}", d["fecha"], imagenes, None))
@@ -1814,16 +1534,14 @@ def main():
             if e.get(campo + "_origen"):
                 shutil.copy2(e[campo + "_origen"], SALIDA / e[campo + "_url"])
         crear_miniatura(e)
-        escribir(e["pdf_url"], pdf_ejercicio(sitio, e))
 
-    documentos = propios + bancos_de_ejercicios(sitio, ejercicios, cursos)
+    documentos = propios  # solo los PDF que se suben a pdfs/
     for d in documentos:
         preparar_documento(sitio, d)
-    banco_de = {d["curso"]: d for d in documentos if d["auto"]}
 
     for e in ejercicios:
         relacionados = [o for o in ejercicios if o["curso"] == e["curso"] and o is not e]
-        escribir(f"{e['url']}index.html", pagina_ejercicio(sitio, e, relacionados, banco_de.get(e["curso"])))
+        escribir(f"{e['url']}index.html", pagina_ejercicio(sitio, e, relacionados))
     for curso in cursos:
         escribir(f"{slugify(curso)}/index.html",
                  pagina_curso(sitio, curso, [e for e in ejercicios if e["curso"] == curso],

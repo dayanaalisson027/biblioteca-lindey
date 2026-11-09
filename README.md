@@ -29,7 +29,7 @@ Campos de cada ejercicio:
 
 Para que una universidad muestre su nombre completo, agrégala en `sitio.json` dentro de `"universidades"`.
 
-Cada ejercicio genera solo su PDF (enunciado + figura + enlace a WhatsApp), aparece en el carrusel de su curso en la portada y entra en el **Banco de ejercicios** en PDF de su curso.
+Cada ejercicio se publica como **imagen + texto** (no se genera PDF) y aparece en el carrusel de su curso en la portada. Solo los archivos que subes a `pdfs/` se publican como PDF.
 
 ### Versión en inglés
 

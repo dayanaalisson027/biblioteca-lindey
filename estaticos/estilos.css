@@ -407,17 +407,6 @@ a.chip--curso:hover { color: #fff; }
 
 /* -------------------------------------------------- repositorio PDF */
 
-.docs { list-style: none; padding: 0; margin: 0 0 1.5rem; display: grid; gap: .6rem; }
-.doc {
-  display: flex; align-items: center; gap: .9rem; padding: .75rem 1rem;
-  background: var(--papel); border: 1px solid var(--borde); border-radius: 12px;
-}
-.doc__icono { color: #c8352a; display: grid; place-items: center; flex: none; }
-.doc__icono svg { width: 28px; height: 28px; }
-.doc__texto { display: flex; flex-direction: column; flex: 1; min-width: 0; }
-.doc__titulo { font-weight: 800; color: var(--marino); text-decoration: none; }
-.doc__titulo:hover { text-decoration: underline; }
-.doc__meta { font-size: .85rem; color: var(--texto-suave); }
 .bloque h3 { font-size: 1.02rem; color: var(--celeste-oscuro); margin: 1.5rem 0 .7rem; }
 
 .banda-pdf {
