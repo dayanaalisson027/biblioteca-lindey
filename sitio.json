@@ -9,7 +9,8 @@
   "universidades": {
     "UCSUR": "Universidad Científica del Sur",
     "UTP": "Universidad Tecnológica del Perú",
-    "IACC": "Instituto Profesional IACC"
+    "IACC": "Instituto Profesional IACC",
+    "UPSJB": "Universidad Privada San Juan Bautista"
   },
   "nombre_en": "Lindey Library",
   "descripcion_en": "Free library of university engineering exercises with full problem statement and figure: Statics, Dynamics, Strength of Materials, Mechanics of Materials and more.",
