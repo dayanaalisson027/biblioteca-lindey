@@ -73,6 +73,7 @@ TEXTOS = {
         "asesoria": "PIDE TU SOLUCIONARIO", "aria_asesoria": "Pide tu solucionario por WhatsApp", "necesitas": "PIDE TU SOLUCIONARIO",
         "compartir": "Compártelo con tus amigos", "copiar": "Copiar enlace", "mas_opciones": "Más opciones",
         "saltar": "Saltar al contenido", "inicio": "Biblioteca Lindey, inicio", "ruta": "Ruta",
+        "contacto": "Contacto", "derechos": "Todos los derechos reservados.",
         "anterior": "Anterior", "siguiente": "Siguiente", "principal": "Principal",
     },
     "en": {
@@ -82,6 +83,7 @@ TEXTOS = {
         "asesoria": "GET YOUR SOLUTION", "aria_asesoria": "Get your solution on WhatsApp", "necesitas": "GET YOUR SOLUTION",
         "compartir": "Share it with your friends", "copiar": "Copy link", "mas_opciones": "More options",
         "saltar": "Skip to content", "inicio": "Lindey Library, home", "ruta": "Breadcrumb",
+        "contacto": "Contact", "derechos": "All rights reserved.",
         "anterior": "Previous", "siguiente": "Next", "principal": "Main",
     },
 }
@@ -724,12 +726,12 @@ def pagina(sitio, *, raiz, ruta, titulo, descripcion, contenido, imagen_social=N
     nombre = sitio["nombre_en"] if en else sitio["nombre"]
     if en:
         nav = (f'<a href="{inicio}#cursos">{t["cursos"]}</a>\n      <a href="{raiz}pdfs/">PDFs</a>')
-        enlaces_pie = (f'<a href="{raiz}">Versión en español</a>\n      <a href="{raiz}pdfs/">PDF repository (Spanish)</a>')
+        enlaces_pie = [(f"{raiz}", "Versión en español"), (f"{raiz}pdfs/", "PDF repository (Spanish)")]
     else:
         nav = (f'<a href="{inicio}#cursos">{t["cursos"]}</a>\n      <a href="{inicio}#universidades">{t["universidades"]}</a>'
                f'\n      <a href="{raiz}pdfs/">PDFs</a>')
-        enlaces_pie = (f'<a href="{raiz}ejercicios/">Índice de ejercicios</a>\n      <a href="{raiz}pdfs/">Repositorio de PDFs</a>'
-                       f'\n      <a href="{raiz}en/">English version</a>')
+        enlaces_pie = [(f"{raiz}ejercicios/", "Índice de ejercicios"), (f"{raiz}pdfs/", "Repositorio de PDFs"),
+                       (f"{raiz}en/", "English version")]
     return f"""<!doctype html>
 <html lang="{t['lang']}">
 <head>
@@ -768,21 +770,50 @@ def pagina(sitio, *, raiz, ruta, titulo, descripcion, contenido, imagen_social=N
 <main id="contenido">
 {contenido}
 </main>
-<footer class="pie">
-  <div class="envoltura pie__in">
-    <p><strong>{esc(nombre)}</strong> · {t['pie']}</p>
-    <p class="pie__enlaces">
-      <a href="{wa}" rel="noopener">WhatsApp {esc(sitio['whatsapp_visible'])}</a>
-      <a href="{esc(sitio['facebook'])}" rel="noopener">Facebook</a>
-      {enlaces_pie}
-    </p>
-  </div>
-</footer>
+{pie_de_pagina(sitio, t, raiz, en, wa, enlaces_pie)}
 <a class="flotante" href="{wa}" rel="noopener" aria-label="{t['aria_asesoria']} {esc(sitio['whatsapp_visible'])}">{ICONO_CHAT}<span>{t['asesoria']}</span></a>
 <script src="{raiz}buscador.js" defer></script>
 </body>
 </html>
 """
+
+
+def pie_de_pagina(sitio, t, raiz, en, wa, enlaces):
+    """Pie de página grande: marca y botón, cursos, universidades y contacto."""
+    datos = sitio.get("pie_datos", {})
+    if en:
+        cursos = [(f"{raiz}en/{slugify(sitio['cursos_en'].get(c, c))}/", sitio["cursos_en"].get(c, c))
+                  for c in datos.get("cursos_en", [])]
+    else:
+        cursos = ([(f"{raiz}{slugify(c)}/", c) for c in datos.get("cursos", [])]
+                  + [(f"{raiz}pdfs/#{slugify(c)}", c) for c in datos.get("cursos_pdf", [])])
+    lista_cursos = "".join(f'<li><a href="{esc(h)}">{esc(n)}</a></li>' for h, n in cursos)
+    lista_unis = "".join(
+        f'<li><a class="pie__uni" href="{raiz}universidad/{slugify(u)}/"><strong>{esc(u)}</strong>'
+        f'{f"<small>{esc(sitio["universidades"][u])}</small>" if sitio["universidades"].get(u) else ""}</a></li>'
+        for u in datos.get("universidades", []))
+    lista_contacto = (f'<li><a href="{wa}" rel="noopener">WhatsApp {esc(sitio["whatsapp_visible"])}</a></li>'
+                      f'<li><a href="{esc(sitio["facebook"])}" rel="noopener">Facebook</a></li>'
+                      + "".join(f'<li><a href="{esc(h)}">{esc(n)}</a></li>' for h, n in enlaces))
+    columnas = [(t["cursos"], lista_cursos), (t["universidades"], lista_unis), (t["contacto"], lista_contacto)]
+    bloques = "".join(f"""
+    <nav class="pie__col" aria-label="{esc(titulo)}">
+      <h2>{esc(titulo)}</h2>
+      <ul>{lista}</ul>
+    </nav>""" for titulo, lista in columnas if lista)
+    nombre = sitio["nombre_en"] if en else sitio["nombre"]
+    return f"""<footer class="pie">
+  <div class="envoltura pie__rejilla">
+    <div class="pie__marca">
+      <img src="{raiz}logo-lindey.png" alt="Lindey Asesoramiento Universitario" width="184" height="56" loading="lazy">
+      <p><strong>{esc(nombre)}</strong> · {t['pie']}</p>
+      <a class="pie__cta" href="{wa}" rel="noopener">{ICONO_CHAT}<span>{t['asesoria']}</span></a>
+    </div>{bloques}
+  </div>
+  <div class="envoltura pie__base">
+    <p>© {date.today().year} Lindey Asesoramiento Universitario · {esc(sitio['dominio'])} · {t['derechos']}</p>
+  </div>
+</footer>"""
 
 
 def migas(raiz, pasos, idioma="es"):
@@ -1236,24 +1267,34 @@ def pagina_curso(sitio, curso, ejercicios, documentos):
                   contenido=contenido, jsonld=ld, alternos=alternos)
 
 
-def pagina_universidad(sitio, sigla, ejercicios):
+def pagina_universidad(sitio, sigla, ejercicios, documentos=()):
     raiz = "../../"
     slug = slugify(sigla)
     nombre = sitio["universidades"].get(sigla, "")
-    nombre_largo = f"{sigla} ({nombre})" if nombre else sigla
-    titulo = f"Ejercicios de la {sigla}{' – ' + nombre if nombre else ''} | {sitio['nombre']}"
-    cursos = sorted({e["curso"] for e in ejercicios}, key=lambda c: orden_curso(sitio, c))
+    de = "del" if nombre.lower().startswith(("instituto", "centro")) else "de la"
+    que = " y ".join(p for p in ("ejercicios" if ejercicios else "", "PDFs" if documentos else "") if p) or "ejercicios"
+    que = que[0].upper() + que[1:]
+    titulo = f"{que} {de} {sigla}{' – ' + nombre if nombre else ''} | {sitio['nombre']}"
+    cursos = sorted({e["curso"] for e in ejercicios} | {d["curso"] for d in documentos}, key=lambda c: orden_curso(sitio, c))
+    tipos = sorted({d["tipo"].lower() for d in documentos})
     descripcion = recortar(
-        f"Ejercicios universitarios de la {nombre_largo}: {', '.join(cursos)}. Enunciado completo y figura.")
+        f"{que} {de} {sigla}{f' ({nombre})' if nombre else ''}: {', '.join(cursos)}. "
+        + ("Enunciado completo y figura. " if ejercicios else "")
+        + (f"PDFs de {', '.join(tipos)} para leer en línea o descargar." if documentos else ""))
     grupos = []
     for curso in cursos:
         del_curso = [e for e in ejercicios if e["curso"] == curso]
-        grupos.append(f'<section class="bloque"><h2>{esc(curso)}</h2>{grilla(del_curso, raiz, con_curso=False)}</section>')
+        docs = [d for d in documentos if d["curso"] == curso]
+        cuerpo = (grilla(del_curso, raiz, con_curso=False) if del_curso else "") + (grilla_documentos(docs, raiz) if docs else "")
+        grupos.append(f'<section class="bloque"><h2>{esc(curso)}</h2>{cuerpo}</section>')
+    cifras = " · ".join(p for p in (
+        f"{len(ejercicios)} {'ejercicio' if len(ejercicios) == 1 else 'ejercicios'}" if ejercicios else "",
+        f"{len(documentos)} {'PDF' if len(documentos) == 1 else 'PDFs'}" if documentos else "") if p)
     contenido = f"""<div class="envoltura">
 {migas(raiz, [("Universidades", f"{raiz}#universidades"), (sigla, None)])}
 <header class="encabezado">
-  <p class="antetitulo">Universidad</p>
-  <h1>Ejercicios de la {esc(sigla)}</h1>
+  <p class="antetitulo">Universidad · {esc(cifras)}</p>
+  <h1>{esc(que)} {de} {esc(sigla)}</h1>
   {f'<p class="bajada">{esc(nombre)}</p>' if nombre else ''}
 </header>
 {"".join(grupos)}
@@ -1327,8 +1368,10 @@ def pagina_documento(sitio, d, cursos_con_pagina=()):
     # Los cursos que solo tienen PDFs (sin ejercicios) no tienen página propia: se enlaza su grupo en /pdfs/
     destino_curso = f"{raiz}{d['curso_slug']}/" if d["curso"] in cursos_con_pagina else f"{raiz}pdfs/#{d['curso_slug']}"
     chips = [f'<a class="chip chip--curso" href="{destino_curso}">{esc(d["curso"])}</a>']
-    for extra in (d["tipo"], d["universidad_nombre"] or d["universidad"],
-                  f"{d['n_paginas']} páginas" if d.get("n_paginas") else ""):
+    if d["universidad"]:
+        etiqueta_uni = f"{d['universidad']} · {d['universidad_nombre']}" if d["universidad_nombre"] else d["universidad"]
+        chips.append(f'<a class="chip" href="{raiz}universidad/{slugify(d["universidad"])}/">{esc(etiqueta_uni)}</a>')
+    for extra in (d["tipo"], f"{d['n_paginas']} páginas" if d.get("n_paginas") else ""):
         if extra:
             chips.append(f'<span class="chip chip--suave">{esc(extra)}</span>')
     chips.append(etiqueta_vistas(d, "chip chip--vistas", contar=True))
@@ -1380,7 +1423,8 @@ def pagina_portada(sitio, ejercicios, documentos, cursos, universidades):
 </section>""")
     chips_uni = []
     for sigla in universidades:
-        n = sum(1 for e in ejercicios if e["universidad"] == sigla)
+        n = (sum(1 for e in ejercicios if e["universidad"] == sigla)
+             + sum(1 for d in documentos if d["universidad"] == sigla))
         nombre = sitio["universidades"].get(sigla, "")
         chips_uni.append(
             f'<li><a class="uni" href="universidad/{slugify(sigla)}/"><strong>{esc(sigla)}</strong>'
@@ -1486,7 +1530,8 @@ def sitemap(sitio, ejercicios, documentos, cursos, universidades):
             filas.append((alt["en"], fecha, None, alt))
         filas.append((f"{u}/{slugify(curso)}/", fecha, None, alt))
     for sigla in universidades:
-        fecha = max(e["fecha"] for e in ejercicios if e["universidad"] == sigla)
+        fecha = max([e["fecha"] for e in ejercicios if e["universidad"] == sigla]
+                    + [d["fecha"] for d in documentos if d["universidad"] == sigla])
         filas.append((f"{u}/universidad/{slugify(sigla)}/", fecha, None, None))
     for e in ejercicios:
         imagenes = [f"{u}/{e['imagen_url']}"]
@@ -1520,7 +1565,14 @@ def main():
     propios = sorted(cargar(CARPETA_PDFS, leer_documento, sitio),
                      key=lambda d: (orden_curso(sitio, d["curso"]), d["orden"], d["titulo"]))
     cursos = sorted({e["curso"] for e in ejercicios}, key=lambda c: orden_curso(sitio, c))
-    universidades = sorted({e["universidad"] for e in ejercicios if e["universidad"]})
+    universidades = sorted({e["universidad"] for e in ejercicios if e["universidad"]}
+                           | {d["universidad"] for d in propios if d["universidad"]})
+    sitio["pie_datos"] = {
+        "cursos": cursos,
+        "cursos_en": [c for c in cursos if any(e["tiene_en"] for e in ejercicios if e["curso"] == c)],
+        "cursos_pdf": sorted({d["curso"] for d in propios} - set(cursos), key=lambda c: orden_curso(sitio, c)),
+        "universidades": universidades,
+    }
 
     if SALIDA.exists():
         shutil.rmtree(SALIDA)
@@ -1548,7 +1600,8 @@ def main():
                               [d for d in documentos if d["curso"] == curso]))
     for sigla in universidades:
         escribir(f"universidad/{slugify(sigla)}/index.html",
-                 pagina_universidad(sitio, sigla, [e for e in ejercicios if e["universidad"] == sigla]))
+                 pagina_universidad(sitio, sigla, [e for e in ejercicios if e["universidad"] == sigla],
+                                    [d for d in documentos if d["universidad"] == sigla]))
     for d in documentos:
         escribir(f"{d['url']}index.html", pagina_documento(sitio, d, cursos))
     con_en = [e for e in ejercicios if e["tiene_en"]]

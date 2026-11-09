@@ -221,12 +221,26 @@ a.chip--curso:hover { color: #fff; }
 
 /* --------------------------------------------------------------- pie */
 
-.pie { background: var(--marino-profundo); color: var(--celeste); margin-top: 4rem; padding: 2rem 0 7rem; font-size: .92rem; }
-.pie p { margin: .35rem 0; }
+.pie { background: var(--marino-profundo); color: var(--celeste); margin-top: 4.5rem; padding: 3.5rem 0 0; font-size: 1.04rem; border-top: 4px solid var(--lima); }
+.pie__rejilla { display: grid; grid-template-columns: 1.4fr 1fr 1.05fr 1.15fr; gap: 2.5rem; }
+.pie__marca img { height: 56px; width: auto; margin-bottom: 1.1rem; }
+.pie__marca p { margin: 0 0 1.4rem; line-height: 1.65; max-width: 25rem; }
 .pie strong { color: #fff; }
-.pie__enlaces { display: flex; flex-wrap: wrap; gap: 1.25rem; }
-.pie a { color: var(--lima); text-decoration: none; font-weight: 600; }
-.pie a:hover { text-decoration: underline; }
+.pie h2 { color: var(--lima); font-size: 1rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; margin: .4rem 0 1.1rem; }
+.pie ul { list-style: none; margin: 0; padding: 0; display: grid; gap: .7rem; }
+.pie a { color: #fff; text-decoration: none; font-weight: 600; }
+.pie a:hover { color: var(--lima); text-decoration: underline; }
+.pie__uni small { display: block; color: var(--celeste); font-weight: 400; font-size: .88rem; opacity: .85; }
+.pie__cta {
+  display: inline-flex; align-items: center; gap: .55rem; background: var(--lima); color: var(--marino-profundo) !important;
+  padding: .9rem 1.4rem; border-radius: 999px; font-weight: 900; font-size: 1.05rem; letter-spacing: .01em;
+}
+.pie__cta svg { width: 24px; height: 24px; }
+.pie__cta:hover { text-decoration: none !important; filter: brightness(1.06); }
+.pie__base { border-top: 1px solid rgba(175, 216, 248, .18); margin-top: 3rem; padding: 1.4rem 0 7.5rem; font-size: .92rem; }
+.pie__base p { margin: 0; opacity: .85; }
+@media (max-width: 960px) { .pie__rejilla { grid-template-columns: 1fr 1fr; } .pie__marca { grid-column: 1 / -1; } }
+@media (max-width: 560px) { .pie__rejilla { grid-template-columns: 1fr; gap: 2rem; } }
 
 /* ------------------------------------------------ carruseles y fichas */
 
