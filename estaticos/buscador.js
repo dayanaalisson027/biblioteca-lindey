@@ -3,7 +3,8 @@
       Se detienen mientras el mouse está encima o al tocarlos, y siguen solos después.
    2. Visor de PDFs tipo revista: pasa hojas, miniaturas, pantalla completa, teclado y deslizar.
    3. Compartir: copiar enlace y menú de compartir del celular.
-   4. Buscador de la portada: busca en buscar.json ignorando tildes; acepta frases de Google Lens. */
+   4. Vistas de cada PDF (como Calaméo) y orden por más vistos en el repositorio.
+   5. Buscador de la portada: busca en buscar.json ignorando tildes; acepta frases de Google Lens. */
 (function () {
   "use strict";
 
@@ -329,6 +330,144 @@
       else respaldo();
     });
   });
+
+  /* ------------------------------------------------ vistas (tipo Calaméo) */
+  /* Cuenta las visitas de cada PDF con un contador gratuito (abacus.jasoncameron.dev).
+     La página del PDF suma 1 visita por sesión; las fichas solo leen el número.
+     El servicio permite 30 consultas cada 10 s por persona: se hacen de a pocas y se guardan 10 minutos. */
+
+  var API = document.body.getAttribute("data-vistas-api");
+  var ESPACIO = document.body.getAttribute("data-vistas-espacio");
+  var vistas = {};
+  var pendientes = {};
+  var cola = [];
+  var enviadas = [];
+
+  function memoria(clave, n) {
+    try {
+      if (n === undefined) {
+        var v = JSON.parse(localStorage.getItem("lv:" + clave));
+        return v && Date.now() - v.t < 600000 ? v.n : null;
+      }
+      localStorage.setItem("lv:" + clave, JSON.stringify({ n: n, t: Date.now() }));
+    } catch (e) { /* sin almacenamiento */ }
+    return null;
+  }
+
+  function despachar() {
+    var ahora = Date.now();
+    enviadas = enviadas.filter(function (t) { return ahora - t < 10000; });
+    while (cola.length && enviadas.length < 24) { enviadas.push(ahora); cola.shift()(); }
+    if (cola.length) setTimeout(despachar, 10050 - (ahora - enviadas[0]));
+  }
+
+  function pedir(accion, clave) {
+    return new Promise(function (listo) {
+      cola.push(function () {
+        fetch(API + "/" + accion + "/" + ESPACIO + "/" + clave)
+          .then(function (r) { return r.status === 404 ? { value: 0 } : (r.ok ? r.json() : null); })
+          .then(function (d) { var n = d ? Number(d.value) : NaN; listo(isFinite(n) ? n : null); },
+                function () { listo(null); });
+      });
+      despachar();
+    });
+  }
+
+  function pintarVistas(clave, n) {
+    vistas[clave] = n;
+    document.querySelectorAll('[data-vistas="' + clave + '"]').forEach(function (el) {
+      el.querySelector(".vistas__n").textContent = n.toLocaleString(EN ? "en-US" : "es-PE");
+      el.querySelector(".vistas__txt").textContent = n === 1 ? (EN ? "view" : "vista") : (EN ? "views" : "vistas");
+      el.hidden = false;
+    });
+  }
+
+  function leerVistas(clave) {
+    if (clave in vistas) return Promise.resolve(vistas[clave]);
+    var guardada = memoria(clave);
+    if (guardada !== null) { pintarVistas(clave, guardada); return Promise.resolve(guardada); }
+    if (!pendientes[clave]) {
+      pendientes[clave] = pedir("get", clave).then(function (n) {
+        if (n !== null) { pintarVistas(clave, n); memoria(clave, n); }
+        return n;
+      });
+    }
+    return pendientes[clave];
+  }
+
+  function contarVista(clave) {
+    var marca = "lv-visto:" + clave;
+    try { if (sessionStorage.getItem(marca)) return leerVistas(clave); } catch (e) { /* sigue */ }
+    pendientes[clave] = pedir("hit", clave).then(function (n) {
+      if (n !== null) {
+        pintarVistas(clave, n);
+        memoria(clave, n);
+        try { sessionStorage.setItem(marca, "1"); } catch (e) { /* sin almacenamiento */ }
+      }
+      return n;
+    });
+    return pendientes[clave];
+  }
+
+  if (API && ESPACIO && window.fetch && window.Promise) {
+    document.querySelectorAll("[data-vistas][data-contar]").forEach(function (el) {
+      contarVista(el.getAttribute("data-vistas"));
+    });
+    var porVer = document.querySelectorAll("[data-vistas]:not([data-contar])");
+    if ("IntersectionObserver" in window) {
+      // Se vigila la ficha (el contador está oculto hasta tener número y lo oculto no "se ve")
+      var vigia = new IntersectionObserver(function (entradas) {
+        entradas.forEach(function (en) {
+          if (!en.isIntersecting) return;
+          vigia.unobserve(en.target);
+          leerVistas(en.target.querySelector("[data-vistas]").getAttribute("data-vistas"));
+        });
+      }, { rootMargin: "200px" });
+      porVer.forEach(function (el) { vigia.observe(el.closest("li") || el.parentNode); });
+    } else {
+      porVer.forEach(function (el) { leerVistas(el.getAttribute("data-vistas")); });
+    }
+  }
+
+  /* Repositorio: ordenar por curso, más vistos o más recientes */
+  var ordenar = document.querySelector("[data-ordenar]");
+  if (ordenar) {
+    var seccionDocs = ordenar.closest("#documentos");
+    var grupos = seccionDocs.querySelector(".documentos__grupos");
+    var plano = seccionDocs.querySelector(".documentos__plano");
+    var fichasDocs = Array.prototype.slice.call(grupos.querySelectorAll(".ficha--doc"));
+    var botonVistas = ordenar.querySelector('[data-orden="vistas"]');
+    if (!API && botonVistas) botonVistas.hidden = true;
+    if (fichasDocs.length > 1) ordenar.hidden = false;
+    ordenar.querySelectorAll("[data-orden]").forEach(function (boton) {
+      boton.addEventListener("click", function () {
+        var modo = boton.getAttribute("data-orden");
+        ordenar.querySelectorAll("[data-orden]").forEach(function (o) { o.setAttribute("aria-pressed", String(o === boton)); });
+        if (modo === "curso") { grupos.hidden = false; plano.hidden = true; return; }
+        var claves = fichasDocs.map(function (li) {
+          var v = li.querySelector("[data-vistas]");
+          return v ? v.getAttribute("data-vistas") : "";
+        });
+        var esperar = modo === "vistas" && API
+          ? Promise.all(claves.map(function (c) { return c ? leerVistas(c) : null; }))
+          : Promise.resolve();
+        boton.setAttribute("aria-busy", "true");
+        esperar.then(function () {
+          boton.removeAttribute("aria-busy");
+          var filas = fichasDocs.map(function (li, i) {
+            return { li: li, i: i, v: vistas[claves[i]] || 0, f: li.getAttribute("data-fecha") || "" };
+          });
+          filas.sort(modo === "vistas"
+            ? function (a, b) { return b.v - a.v || a.i - b.i; }
+            : function (a, b) { return a.f < b.f ? 1 : a.f > b.f ? -1 : a.i - b.i; });
+          plano.innerHTML = "";
+          filas.forEach(function (fila) { plano.appendChild(fila.li.cloneNode(true)); });
+          grupos.hidden = true;
+          plano.hidden = false;
+        });
+      });
+    });
+  }
 
   /* ------------------------------------------------------------ buscador */
 

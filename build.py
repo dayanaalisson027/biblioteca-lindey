@@ -15,18 +15,23 @@ Genera además:
     - un PDF por ejercicio (enunciado + imagen)
     - un "Banco de ejercicios" en PDF por curso
     - las páginas de cada PDF como imágenes para el visor tipo revista
+    - la marca de agua Lindey en cada documento propio (PDF descargable y páginas del visor)
 
 Variable opcional:
     SITE_URL=https://www.midominio.com python build.py
+(En GitHub Actions la dirección se deduce sola del nombre de la cuenta y del repositorio.)
 
-Funciona con Python 3.8+. Opcionales: Pillow (miniaturas de los carruseles),
+Funciona con Python 3.8+. Opcionales: Pillow (miniaturas de los carruseles), pypdf (marca de agua),
 Poppler (pdftoppm/pdftotext) o PyMuPDF (páginas de los PDFs) y LibreOffice (Word → PDF).
 """
 
 import html
+import io
 import json
+import math
 import os
 import re
+import secrets
 import shutil
 import struct
 import subprocess
@@ -179,9 +184,34 @@ def json_en_html(dato):
 
 # --------------------------------------------------------------- configuración
 
+def url_github_pages():
+    """En GitHub Actions, deduce la dirección pública del nombre de la cuenta y del repositorio.
+    Así, si cambias el nombre de usuario o del repositorio, el sitio se corrige solo."""
+    repo = os.environ.get("GITHUB_REPOSITORY", "")
+    if os.environ.get("GITHUB_ACTIONS") != "true" or "/" not in repo:
+        return None
+    duenio, nombre = repo.split("/", 1)
+    duenio = duenio.lower()
+    if nombre.lower() == f"{duenio}.github.io":
+        return f"https://{duenio}.github.io"
+    return f"https://{duenio}.github.io/{nombre}"
+
+
 def cargar_sitio():
     sitio = json.loads((RAIZ / "sitio.json").read_text(encoding="utf-8-sig"))
-    sitio["url"] = os.environ.get("SITE_URL", sitio["url"]).rstrip("/")
+    url = sitio["url"]
+    if "github.io" in url and url_github_pages():  # con dominio propio se respeta sitio.json
+        url = url_github_pages()
+    sitio["url"] = os.environ.get("SITE_URL", url).rstrip("/")
+    sitio["dominio"] = re.sub(r"^https?://", "", sitio["url"])
+    marca = sitio.setdefault("marca_agua", {})
+    marca.setdefault("texto", "LINDEY")
+    marca.setdefault("subtexto", f"Asesoramiento Universitario · WhatsApp {sitio['whatsapp_visible']}")
+    marca.setdefault("pie", f"Biblioteca Lindey · {sitio['dominio']} · ¿Necesitas asesoría? WhatsApp {sitio['whatsapp_visible']}")
+    marca.setdefault("proteger", True)
+    contador = sitio.setdefault("contador_vistas", {})
+    contador.setdefault("servicio", "https://abacus.jasoncameron.dev")
+    contador.setdefault("espacio", "biblioteca-lindey")
     sitio["ruta_base"] = (urlparse(sitio["url"]).path.rstrip("/") + "/") or "/"
     sitio.setdefault("universidades", {})
     sitio.setdefault("orden_cursos", [])
@@ -289,6 +319,8 @@ def leer_documento(ruta, sitio):
         "cuerpo": cuerpo,
         "origen": origen,
         "auto": False,
+        "vistas": ("pdf-" + slug)[:64].rstrip("-"),
+        "orden": numero_natural(datos.get("orden") or ruta.stem),
         "url": f"pdfs/{slug}/",
         "pdf_url": f"pdfs/archivos/{slug}.pdf",
     }
@@ -620,8 +652,121 @@ def convertir_a_pdf(origen):
     return carpeta / (origen.stem + ".pdf")
 
 
-def renderizar_paginas(ruta_pdf, slug):
-    """Convierte cada página del PDF en imagen (grande y miniatura) y extrae su texto."""
+def pdf_marca_agua(ancho, alto, sitio):
+    """PDF de una página (ancho × alto) con la marca de agua: sello diagonal translúcido y pie con la web."""
+    marca = sitio["marca_agua"]
+    angulo = math.atan2(alto, ancho)
+    c, s = math.cos(angulo), math.sin(angulo)
+    diagonal = math.hypot(ancho, alto)
+    cx, cy = ancho / 2, alto / 2
+
+    def linea(texto, tam, desplazamiento, fuente):
+        """Texto centrado en la diagonal; desplazamiento = distancia de la línea base al centro (perpendicular)."""
+        w = ancho_pdf(texto, tam, fuente == "FLb")
+        x = cx - c * w / 2 - s * desplazamiento
+        y = cy - s * w / 2 + c * desplazamiento
+        return (f"BT /{fuente} {tam:.2f} Tf {c:.5f} {s:.5f} {-s:.5f} {c:.5f} {x:.2f} {y:.2f} Tm ".encode()
+                + pdf_cadena(texto) + b" Tj ET\n")
+
+    grande = marca["texto"]
+    tam = min(diagonal * 0.55 / (ancho_pdf(grande, 1, True) or 1), alto * 0.22)
+    tam_sub = max(9.0, min(tam * 0.2, diagonal * 0.6 / (ancho_pdf(marca["subtexto"], 1, True) or 1)))
+    tam_pie = 6.8 if ancho < 700 else 8.5
+    pie = marca["pie"]
+    while ancho_pdf(pie, tam_pie) > ancho - 24 and tam_pie > 4:
+        tam_pie -= 0.2
+    contenido = (b"q /GLa gs " + COLORES["marino_medio"].encode() + b" rg\n"
+                 + linea(grande, tam, -tam * 0.36, "FLb")
+                 + b"/GLb gs\n" + linea(marca["subtexto"], tam_sub, -tam * 0.36 - tam_sub * 1.9, "FLb")
+                 + b"Q\nq /GLc gs " + COLORES["celeste_osc"].encode() + b" rg BT /FLr " + f"{tam_pie:.2f}".encode()
+                 + f" Tf {(ancho - ancho_pdf(pie, tam_pie)) / 2:.2f} 9 Td ".encode() + pdf_cadena(pie) + b" Tj ET Q\n")
+    objetos = [
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        f"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 {ancho:.2f} {alto:.2f}] /Contents 4 0 R "
+        f"/Resources << /Font << /FLb 5 0 R /FLr 6 0 R >> /ExtGState << /GLa 7 0 R /GLb 8 0 R /GLc 9 0 R >> >> >>".encode(),
+        f"<< /Length {len(contenido)} >>\nstream\n".encode() + contenido + b"endstream",
+        b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>",
+        b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>",
+        b"<< /Type /ExtGState /ca 0.09 /CA 0.09 >>",
+        b"<< /Type /ExtGState /ca 0.16 /CA 0.16 >>",
+        b"<< /Type /ExtGState /ca 0.9 /CA 0.9 >>",
+    ]
+    salida = bytearray(b"%PDF-1.4\n")
+    posiciones = []
+    for n, obj in enumerate(objetos, 1):
+        posiciones.append(len(salida))
+        salida += f"{n} 0 obj\n".encode() + obj + b"\nendobj\n"
+    inicio_xref = len(salida)
+    salida += f"xref\n0 {len(objetos) + 1}\n0000000000 65535 f \n".encode()
+    salida += b"".join(f"{p:010d} 00000 n \n".encode() for p in posiciones)
+    salida += f"trailer\n<< /Size {len(objetos) + 1} /Root 1 0 R >>\nstartxref\n{inicio_xref}\n%%EOF\n".encode()
+    return bytes(salida), (ancho - ancho_pdf(pie, tam_pie)) / 2, ancho_pdf(pie, tam_pie), tam_pie
+
+
+def marcar_pdf(origen, sitio, d):
+    """Pone la marca de agua Lindey en cada página.
+    Devuelve (pdf_para_el_visor, pdf_para_descargar) o None si no se pudo (se publica el original)."""
+    try:
+        from pypdf import PdfReader, PdfWriter, Transformation
+        from pypdf.annotations import Link
+        from pypdf.constants import UserAccessPermissions as Permiso
+    except ImportError:
+        print("Aviso: instala pypdf para poner la marca de agua en los PDF (pip install pypdf)")
+        return None
+    try:
+        lector = PdfReader(str(origen))
+        if lector.is_encrypted and not lector.decrypt(""):
+            raise ValueError("el PDF tiene contraseña")
+        escritor = PdfWriter(clone_from=lector)
+        if escritor.is_encrypted:
+            escritor._encryption = None
+        sellos = {}
+        wa = enlace_whatsapp(sitio, f"Hola Lindey, vi el PDF «{d['titulo']}» y necesito asesoría.")
+        for i, hoja in enumerate(escritor.pages):
+            if hoja.get("/Rotate", 0) % 360:
+                hoja.transfer_rotation_to_content()
+            caja = hoja.cropbox
+            ancho, alto = float(caja.width), float(caja.height)
+            clave = (round(ancho, 1), round(alto, 1))
+            if clave not in sellos:
+                datos, x_pie, w_pie, tam_pie = pdf_marca_agua(ancho, alto, sitio)
+                sellos[clave] = (PdfReader(io.BytesIO(datos)).pages[0], x_pie, w_pie, tam_pie)
+            sello, x_pie, w_pie, tam_pie = sellos[clave]
+            izq, abajo = float(caja.left), float(caja.bottom)
+            hoja.merge_transformed_page(sello, Transformation().translate(izq, abajo), over=True)
+            escritor.add_annotation(i, Link(rect=(izq + x_pie, abajo + 6, izq + x_pie + w_pie, abajo + 10 + tam_pie),
+                                            url=wa, border=[0, 0, 0]))
+        escritor.add_metadata({"/Title": d["titulo"], "/Author": "Lindey Asesoramiento Universitario",
+                               "/Subject": f"{d['tipo']} de {d['curso']} – Biblioteca Lindey ({sitio['dominio']})",
+                               "/Keywords": ", ".join([d["curso"], *d["palabras"], "Lindey"]),
+                               "/Creator": f"Biblioteca Lindey – {sitio['url']}/"})
+        visor = io.BytesIO()
+        escritor.write(visor)
+        if not sitio["marca_agua"].get("proteger"):
+            return visor.getvalue(), visor.getvalue()
+        # Se puede leer e imprimir, pero no editar ni copiar (para que no quiten la marca de agua).
+        permisos = Permiso.all()
+        for quitar in (Permiso.MODIFY, Permiso.EXTRACT, Permiso.ADD_OR_MODIFY, Permiso.ASSEMBLE_DOC):
+            permisos &= ~quitar
+        for algoritmo in ("AES-256", "RC4-128"):
+            try:
+                escritor.encrypt(user_password="", owner_password=secrets.token_hex(16),
+                                 permissions_flag=permisos, algorithm=algoritmo)
+                break
+            except Exception:
+                continue
+        descarga = io.BytesIO()
+        escritor.write(descarga)
+        return visor.getvalue(), descarga.getvalue()
+    except Exception as e:  # el documento se publica igual, sin marca
+        print(f"Aviso: no se pudo poner la marca de agua en {Path(origen).name}: {e}")
+        return None
+
+
+def renderizar_paginas(ruta_pdf, slug, ruta_texto=None):
+    """Convierte cada página del PDF en imagen (grande y miniatura) y extrae su texto (de ruta_texto si se da)."""
+    ruta_texto = ruta_texto or ruta_pdf
     carpeta_rel = f"pdfs/paginas/{slug}"
     destino = SALIDA / carpeta_rel
     destino.mkdir(parents=True, exist_ok=True)
@@ -640,7 +785,7 @@ def renderizar_paginas(ruta_pdf, slug):
             ancho, alto = info_imagen(destino / f"pagina-{i}.jpg")[:2]
             paginas.append({"i": f"{carpeta_rel}/pagina-{i}.jpg", "m": f"{carpeta_rel}/mini-{i}.jpg", "w": ancho, "h": alto})
         if shutil.which("pdftotext"):
-            salida = subprocess.run(["pdftotext", "-enc", "UTF-8", str(ruta_pdf), "-"], capture_output=True)
+            salida = subprocess.run(["pdftotext", "-enc", "UTF-8", str(ruta_texto), "-"], capture_output=True)
             textos = [t.strip() for t in salida.stdout.decode("utf-8", "replace").split("\f")]
         return paginas, textos
     try:
@@ -648,14 +793,14 @@ def renderizar_paginas(ruta_pdf, slug):
     except ImportError:
         return paginas, textos
     try:
-        with fitz.open(str(ruta_pdf)) as pdf:
+        with fitz.open(str(ruta_pdf)) as pdf, fitz.open(str(ruta_texto)) as pdf_texto:
             for i, hoja in enumerate(pdf, 1):
                 for nombre, ancho in (("pagina", 1000), ("mini", 360)):
                     zoom = ancho / hoja.rect.width
                     hoja.get_pixmap(matrix=fitz.Matrix(zoom, zoom), alpha=False).save(str(destino / f"{nombre}-{i}.png"))
                 ancho, alto = info_imagen(destino / f"pagina-{i}.png")[:2]
                 paginas.append({"i": f"{carpeta_rel}/pagina-{i}.png", "m": f"{carpeta_rel}/mini-{i}.png", "w": ancho, "h": alto})
-                textos.append(hoja.get_text().strip())
+                textos.append(pdf_texto[i - 1].get_text().strip() if i <= len(pdf_texto) else "")
     except Exception as e:  # el documento se publica igual, con el visor del navegador
         print(f"Aviso: no se pudieron generar las páginas de {ruta_pdf.name}: {e}")
     return paginas, textos
@@ -699,12 +844,21 @@ def preparar_documento(sitio, d):
     """Copia el PDF al sitio, genera sus páginas y arma la transcripción."""
     destino = SALIDA / d["pdf_url"]
     destino.parent.mkdir(parents=True, exist_ok=True)
+    para_visor = original = destino
     if d.get("pdf_bytes") is not None:
         destino.write_bytes(d["pdf_bytes"])
     else:
-        shutil.copy2(convertir_a_pdf(d["origen"]), destino)
+        original = convertir_a_pdf(d["origen"])
+        marcado = marcar_pdf(original, sitio, d)
+        if marcado:
+            para_visor = Path(tempfile.mkdtemp(prefix="lindey-")) / "visor.pdf"
+            para_visor.write_bytes(marcado[0])
+            destino.write_bytes(marcado[1])
+            d["con_marca"] = True
+        else:
+            shutil.copy2(original, destino)
     d["bytes"] = destino.stat().st_size
-    d["paginas"], textos = renderizar_paginas(destino, d["slug"])
+    d["paginas"], textos = renderizar_paginas(para_visor, d["slug"], original)
     d["n_paginas"] = len(d["paginas"])
     d["portada"] = d["paginas"][0] if d["paginas"] else None
     if d.get("contenido_html"):
@@ -853,7 +1007,7 @@ def pagina(sitio, *, raiz, ruta, titulo, descripcion, contenido, imagen_social=N
 <link rel="icon" href="{raiz}favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="{raiz}estilos.css">{bloques_ld}
 </head>
-<body class="{cuerpo_clase}" data-raiz="{raiz}">
+<body class="{cuerpo_clase}" data-raiz="{raiz}" data-vistas-api="{esc(sitio['contador_vistas']['servicio'].rstrip('/'))}" data-vistas-espacio="{esc(sitio['contador_vistas']['espacio'])}">
 <a class="saltar" href="#contenido">{t['saltar']}</a>
 <header class="cabecera">
   <div class="envoltura cabecera__in">
@@ -935,18 +1089,32 @@ def meta_documento(d):
     return " · ".join(p for p in (d["tipo"], d["universidad"], paginas) if p)
 
 
+ICONO_OJO = ('<svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" '
+             'd="M12 5C6.5 5 2.7 9.3 1.5 12c1.2 2.7 5 7 10.5 7s9.3-4.3 10.5-7C21.3 9.3 17.5 5 12 5zm0 11.5a4.5 4.5 0 1 1 0-9 '
+             '4.5 4.5 0 0 1 0 9zm0-2.3a2.2 2.2 0 1 0 0-4.4 2.2 2.2 0 0 0 0 4.4z"/></svg>')
+
+
+def etiqueta_vistas(d, clase, contar=False):
+    """Contador de vistas tipo Calaméo; lo llena buscador.js (queda oculto si el servicio no responde)."""
+    if not d.get("vistas"):
+        return ""
+    return (f'<span class="{clase}" data-vistas="{esc(d["vistas"])}"{" data-contar" if contar else ""} hidden>'
+            f'{ICONO_OJO}<span class="vistas__n">0</span> <span class="vistas__txt">vistas</span></span>')
+
+
 def ficha_documento(d, raiz, carga="lazy"):
     if d.get("portada"):
         dims = f' width="{d["portada"]["w"]}" height="{d["portada"]["h"]}"' if d["portada"]["w"] else ""
         tapa = f'<img src="{raiz}{d["portada"]["m"]}" alt="Portada: {esc(d["titulo"])}"{dims} loading="{carga}" decoding="async">'
     else:
         tapa = f'<span class="libro-tapa__vacia">{ICONO_PDF}<span>PDF</span></span>'
-    return f"""<li class="ficha ficha--doc">
+    return f"""<li class="ficha ficha--doc" data-fecha="{esc(d['fecha'])}" data-orden="{d.get('orden', 0)}">
   <a href="{raiz}{d['url']}">
     <span class="libro-tapa">{tapa}</span>
     <span class="ficha__cuerpo">
       <span class="ficha__meta">{esc(meta_documento(d))}</span>
       <span class="ficha__titulo">{esc(d['titulo'])}</span>
+      {etiqueta_vistas(d, "ficha__vistas")}
     </span>
   </a>
 </li>"""
@@ -1399,8 +1567,19 @@ def pagina_repositorio(sitio, ejercicios, documentos, cursos):
     if propios:
         cursos_docs = sorted({d["curso"] for d in propios}, key=lambda c: orden_curso(sitio, c))
         grupos = "".join(
-            f'<h3>{esc(c)}</h3>{grilla_documentos([d for d in propios if d["curso"] == c], raiz)}' for c in cursos_docs)
-        secciones.append(f'<section class="bloque" id="documentos"><h2>Documentos</h2>{grupos}</section>')
+            f'<h3 id="{slugify(c)}">{esc(c)}</h3>{grilla_documentos([d for d in propios if d["curso"] == c], raiz)}'
+            for c in cursos_docs)
+        orden = """<div class="ordenar" data-ordenar hidden>
+    <span>Ordenar:</span>
+    <button type="button" data-orden="curso" aria-pressed="true">Por curso</button>
+    <button type="button" data-orden="vistas" aria-pressed="false">Más vistos</button>
+    <button type="button" data-orden="fecha" aria-pressed="false">Más recientes</button>
+  </div>"""
+        secciones.append(f"""<section class="bloque" id="documentos">
+  <div class="seccion__cabecera"><h2>Documentos <span class="contador">{len(propios)}</span></h2>{orden}</div>
+  <div class="documentos__grupos">{grupos}</div>
+  <ul class="fichas fichas--docs documentos__plano" hidden></ul>
+</section>""")
     if bancos:
         secciones.append(f'<section class="bloque" id="bancos"><h2>Bancos de ejercicios por curso</h2>{grilla_documentos(bancos, raiz)}</section>')
     grupos = "".join(
@@ -1420,14 +1599,18 @@ def pagina_repositorio(sitio, ejercicios, documentos, cursos):
                   contenido=contenido, jsonld=[migas_jsonld(sitio, [("Repositorio de PDFs", "pdfs/")])])
 
 
-def pagina_documento(sitio, d):
+def pagina_documento(sitio, d, cursos_con_pagina=()):
     raiz = "../../"
     mensaje = f"Hola Lindey, vi el PDF «{d['titulo']}» en la Biblioteca Lindey y necesito asesoría."
     url_abs = f"{sitio['url']}/{d['url']}"
-    chips = [f'<a class="chip chip--curso" href="{raiz}{d["curso_slug"]}/">{esc(d["curso"])}</a>']
-    for extra in (d["tipo"], d["universidad"], f"{d['n_paginas']} páginas" if d.get("n_paginas") else ""):
+    # Los cursos que solo tienen PDFs (sin ejercicios) no tienen página propia: se enlaza su grupo en /pdfs/
+    destino_curso = f"{raiz}{d['curso_slug']}/" if d["curso"] in cursos_con_pagina else f"{raiz}pdfs/#{d['curso_slug']}"
+    chips = [f'<a class="chip chip--curso" href="{destino_curso}">{esc(d["curso"])}</a>']
+    for extra in (d["tipo"], d["universidad_nombre"] or d["universidad"],
+                  f"{d['n_paginas']} páginas" if d.get("n_paginas") else ""):
         if extra:
             chips.append(f'<span class="chip chip--suave">{esc(extra)}</span>')
+    chips.append(etiqueta_vistas(d, "chip chip--vistas", contar=True))
     transcripcion = (d["contenido_html"] or
                      "<p>La transcripción de este documento estará disponible pronto.</p>")
     contenido = f"""<div class="envoltura">
@@ -1481,14 +1664,16 @@ def pagina_portada(sitio, ejercicios, documentos, cursos, universidades):
         chips_uni.append(
             f'<li><a class="uni" href="universidad/{slugify(sigla)}/"><strong>{esc(sigla)}</strong>'
             f'{f"<span>{esc(nombre)}</span>" if nombre else ""}<em>{n}</em></a></li>')
+    # Solo los PDF subidos por Lindey (los bancos automáticos quedan en el repositorio)
+    propios = [d for d in documentos if not d["auto"]]
     seccion_docs = ""
-    if documentos:
+    if propios:
         seccion_docs = f"""<section class="seccion-curso" aria-labelledby="c-pdfs">
   <div class="seccion__cabecera">
-    <h2 id="c-pdfs"><a href="pdfs/">PDFs para leer y descargar</a> <span class="contador">{len(documentos)}</span></h2>
+    <h2 id="c-pdfs"><a href="pdfs/">PDFs para leer y descargar</a> <span class="contador">{len(propios)}</span></h2>
     <a class="enlace-flecha" href="pdfs/">Ver repositorio</a>
   </div>
-  {carrusel("".join(ficha_documento(d, raiz) for d in documentos), "PDFs para leer y descargar")}
+  {carrusel("".join(ficha_documento(d, raiz) for d in propios), "PDFs para leer y descargar")}
 </section>"""
 
     contenido = f"""<section class="portada">
@@ -1500,7 +1685,7 @@ def pagina_portada(sitio, ejercicios, documentos, cursos, universidades):
       <input id="q" name="q" type="search" autocomplete="off" placeholder="Ej.: zapata combinada, pandeo, viga conjugada…">
       <button type="submit">Buscar</button>
     </form>
-    <p class="portada__cifras">{len(ejercicios)} ejercicios · {len(cursos)} cursos · {len(documentos)} documentos PDF</p>
+    <p class="portada__cifras">{len(ejercicios)} ejercicios · {len(cursos)} cursos · {len(propios)} documentos PDF</p>
   </div>
 </section>
 <div class="envoltura">
@@ -1613,7 +1798,7 @@ def main():
     sitio = cargar_sitio()
     ejercicios = sorted(cargar(CARPETA_EJERCICIOS, leer_ejercicio, sitio), key=orden_ejercicio(sitio))
     propios = sorted(cargar(CARPETA_PDFS, leer_documento, sitio),
-                     key=lambda d: (orden_curso(sitio, d["curso"]), d["titulo"]))
+                     key=lambda d: (orden_curso(sitio, d["curso"]), d["orden"], d["titulo"]))
     cursos = sorted({e["curso"] for e in ejercicios}, key=lambda c: orden_curso(sitio, c))
     universidades = sorted({e["universidad"] for e in ejercicios if e["universidad"]})
 
@@ -1647,7 +1832,7 @@ def main():
         escribir(f"universidad/{slugify(sigla)}/index.html",
                  pagina_universidad(sitio, sigla, [e for e in ejercicios if e["universidad"] == sigla]))
     for d in documentos:
-        escribir(f"{d['url']}index.html", pagina_documento(sitio, d))
+        escribir(f"{d['url']}index.html", pagina_documento(sitio, d, cursos))
     con_en = [e for e in ejercicios if e["tiene_en"]]
     for e in con_en:
         relacionados = [o for o in con_en if o["curso"] == e["curso"] and o is not e]
@@ -1668,6 +1853,9 @@ def main():
     escribir(".nojekyll", "")
 
     sin_paginas = [d["titulo"] for d in documentos if not d.get("paginas")]
+    con_marca = sum(1 for d in propios if d.get("con_marca"))
+    if propios:
+        print(f"Marca de agua: {con_marca} de {len(propios)} documentos propios")
     sin_ingles = [e["archivo"] for e in ejercicios if not e["tiene_en"]]
     if sin_ingles:
         print("Aviso: sin versión en inglés (faltan tema_en o [en]): " + ", ".join(sin_ingles))

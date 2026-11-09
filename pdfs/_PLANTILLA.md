@@ -27,5 +27,5 @@ CÓMO AGREGAR UN DOCUMENTO (PDF o Word)
    Si lo dejas vacío, se copia solo el texto del PDF (si el PDF es escaneado, no tiene texto: transcríbelo).
 5. Campos obligatorios: titulo, curso, archivo. "tipo" puede ser Examen, Práctica, Solucionario, Formulario, Apuntes…
 6. Los archivos que empiezan con _ (como este) no se publican. Borra este bloque de comentarios en tu copia.
-El sitio genera solo la vista tipo revista (páginas, miniaturas y pantalla completa).
+El sitio genera solo la vista tipo revista (páginas, miniaturas y pantalla completa), la marca de agua Lindey y el contador de vistas.
 -->

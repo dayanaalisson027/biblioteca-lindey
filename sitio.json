@@ -1,6 +1,6 @@
 {
   "nombre": "Biblioteca Lindey",
-  "url": "https://dayanaalisson027.github.io/biblioteca-lindey",
+  "url": "https://elsolucionario.github.io/biblioteca-lindey",
   "descripcion": "Biblioteca abierta de ejercicios universitarios de ingeniería con enunciado completo y figura: Estática, Dinámica, Resistencia de Materiales, Mecánica de Materiales y más.",
   "whatsapp": "51970302148",
   "whatsapp_visible": "+51 970 302 148",
@@ -8,7 +8,8 @@
   "google_verificacion": "",
   "universidades": {
     "UCSUR": "Universidad Científica del Sur",
-    "UTP": "Universidad Tecnológica del Perú"
+    "UTP": "Universidad Tecnológica del Perú",
+    "IACC": "Instituto Profesional IACC"
   },
   "nombre_en": "Lindey Library",
   "descripcion_en": "Free library of university engineering exercises with full problem statement, figure and PDF: Statics, Dynamics, Strength of Materials, Mechanics of Materials and more.",
@@ -18,7 +19,8 @@
     "Resistencia de Materiales": "Strength of Materials",
     "Resistencia de Materiales I": "Strength of Materials I",
     "Mecánica de Materiales II": "Mechanics of Materials II",
-    "Mecánica de Fluidos": "Fluid Mechanics"
+    "Mecánica de Fluidos": "Fluid Mechanics",
+    "Interpretación de Planos": "Blueprint Reading"
   },
   "orden_cursos": [
     "Estática",
@@ -26,6 +28,15 @@
     "Resistencia de Materiales",
     "Resistencia de Materiales I",
     "Mecánica de Materiales II",
-    "Mecánica de Fluidos"
-  ]
+    "Mecánica de Fluidos",
+    "Interpretación de Planos"
+  ],
+  "marca_agua": {
+    "texto": "LINDEY",
+    "proteger": true
+  },
+  "contador_vistas": {
+    "servicio": "https://abacus.jasoncameron.dev",
+    "espacio": "lindey-biblioteca-pdf"
+  }
 }

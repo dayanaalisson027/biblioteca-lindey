@@ -2,7 +2,7 @@
 
 Biblioteca abierta de ejercicios universitarios de ingeniería (Estática, Dinámica, Resistencia de Materiales, Mecánica de Materiales, Mecánica de Fluidos…) publicada por **Lindey Asesoramiento Universitario** · WhatsApp +51 970 302 148.
 
-Sitio: https://dayanaalisson027.github.io/biblioteca-lindey/
+Sitio: https://elsolucionario.github.io/biblioteca-lindey/
 
 ## Cómo agregar un ejercicio nuevo (desde la web de GitHub)
 
@@ -39,7 +39,9 @@ Cada ejercicio puede tener su página en inglés (`/en/...`): agrega `tema_en:` 
 
 1. Entra a la carpeta `pdfs/` → **Add file → Upload files** → sube el PDF o Word → **Commit changes**.
 2. Copia `pdfs/_PLANTILLA.md` en un archivo nuevo de `pdfs/` (ejemplo: `examen-parcial-estatica-ucsur-2026-1.md`), escribe el nombre del archivo en `archivo:`, completa título y curso, y debajo pega la transcripción de los ejercicios → **Commit changes**.
-3. El documento aparece en el **Repositorio de PDFs** con portada, visor tipo revista (pasa hojas, miniaturas y pantalla completa), su transcripción y botones para compartir.
+3. El documento aparece en la portada (**PDFs para leer y descargar**) y en el **Repositorio de PDFs** con portada, visor tipo revista (pasa hojas, miniaturas y pantalla completa), su transcripción, botones para compartir y su **contador de vistas**.
+4. Cada página lleva la **marca de agua Lindey** (sello diagonal con tu WhatsApp y un pie con la dirección de la web que abre WhatsApp). El PDF que se descarga se puede leer e imprimir, pero no editar ni copiar. El texto de la marca se cambia en `sitio.json` → `marca_agua` (`texto`, `subtexto`, `pie`; `"proteger": false` quita el bloqueo).
+5. Las vistas se cuentan con el servicio gratuito abacus.jasoncameron.dev (una vista por persona y sesión). En el repositorio se puede ordenar por **Más vistos**.
 
 ## Cómo funciona
 
@@ -47,8 +49,8 @@ Cada ejercicio puede tener su página en inglés (`/en/...`): agrega `tema_en:` 
 - `imagenes/` — imágenes modo Lindey.
 - `pdfs/` — PDFs propios, cada uno con su `.md`.
 - `estaticos/` — estilos, buscador, logo.
-- `sitio.json` — nombre, URL pública, WhatsApp, universidades y orden de cursos.
-- `build.py` — genera el sitio en `_site/` (Python; usa Pillow para miniaturas, Poppler para las páginas de los PDF y LibreOffice si hay archivos Word).
+- `sitio.json` — nombre, URL pública, WhatsApp, universidades, orden de cursos, marca de agua y contador de vistas. En GitHub la URL se corrige sola si cambias el nombre de la cuenta o del repositorio.
+- `build.py` — genera el sitio en `_site/` (Python; usa Pillow para miniaturas, pypdf para la marca de agua, Poppler para las páginas de los PDF y LibreOffice si hay archivos Word).
 - `.github/workflows/publicar.yml` — cada cambio en `main` vuelve a generar y publicar el sitio en GitHub Pages.
 
 Para generarlo en tu PC: `python build.py` y abre `_site/index.html`.

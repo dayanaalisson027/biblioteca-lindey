@@ -484,3 +484,26 @@ a.chip--curso:hover { color: #fff; }
   .carrusel__pista { scroll-behavior: auto; }
   .flotante, .flotante::after { animation: none; }
 }
+
+/* ------------------------------------------------ vistas (tipo Calaméo) */
+[hidden] { display: none !important; }
+.ficha__vistas {
+  display: inline-flex; align-items: center; gap: .3rem; margin-top: .15rem;
+  font-size: .82rem; font-weight: 600; color: var(--texto-suave);
+}
+.ficha__vistas svg, .chip--vistas svg { flex: none; color: var(--celeste-oscuro); }
+.chip--vistas { display: inline-flex; align-items: center; gap: .35rem; background: #f1fcea; border-color: #cdeeb8; color: var(--marino); }
+.chip--vistas svg { color: var(--lima-oscuro); }
+
+/* Repositorio: ordenar documentos */
+.ordenar { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; font-size: .88rem; color: var(--texto-suave); }
+.ordenar span { font-weight: 700; }
+.ordenar button {
+  font: inherit; font-weight: 700; cursor: pointer; padding: .3rem .8rem; border-radius: 999px;
+  background: var(--papel); color: var(--marino-medio); border: 1px solid var(--borde);
+}
+.ordenar button:hover { border-color: var(--celeste-medio); }
+.ordenar button[aria-pressed="true"] { background: var(--marino); color: var(--lima); border-color: var(--marino); }
+.ordenar button[aria-busy="true"] { opacity: .6; cursor: progress; }
+#documentos .seccion__cabecera { flex-wrap: wrap; align-items: center; }
+#documentos h3 { scroll-margin-top: 1rem; }
