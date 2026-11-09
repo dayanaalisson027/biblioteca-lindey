@@ -18,32 +18,7 @@ La jefatura te encarga, en tu rol dentro del área de mantenimiento, analizar un
 
 Con la aseguradora pidiendo cifras antes de renovar la póliza, ¿qué dirían estos 20 registros sobre la forma en que hoy responde el equipo de mantenimiento?
 
-### Tabla 1. Muestra de 20 órdenes de trabajo correctivas de AcuaSur
-
-| N° OT | Equipo | Tipo de falla | Turno | Repuestos usados | Horas de reparación |
-|---|---|---|---|---|---|
-| OT-1051 | Compresor de oxígeno | Mecánica | Día | 4 | 2,0 |
-| OT-1064 | Aireador | Eléctrica | Noche | 2 | 5,0 |
-| OT-1077 | Aireador | Eléctrica | Día | 1 | 1,8 |
-| OT-1090 | Aireador | Eléctrica | Noche | 4 | 4,5 |
-| OT-1103 | Compresor de oxígeno | Instrumentación | Día | 3 | 5,6 |
-| OT-1116 | Aireador | Mecánica | Noche | 4 | 2,2 |
-| OT-1129 | Aireador | Hidráulica | Día | 2 | 2,9 |
-| OT-1142 | Bomba de alimentación | Hidráulica | Noche | 1 | 3,8 |
-| OT-1155 | Aireador | Mecánica | Día | 2 | 1,5 |
-| OT-1168 | Bomba de alimentación | Mecánica | Noche | 2 | 6,2 |
-| OT-1181 | Bomba de alimentación | Hidráulica | Día | 1 | 2,6 |
-| OT-1194 | Aireador | Mecánica | Noche | 0 | 2,3 |
-| OT-1207 | Compresor de oxígeno | Eléctrica | Día | 1 | 6,8 |
-| OT-1220 | Compresor de oxígeno | Eléctrica | Noche | 0 | 14,5 |
-| OT-1233 | Aireador | Instrumentación | Día | 0 | 3,4 |
-| OT-1246 | Compresor de oxígeno | Eléctrica | Noche | 3 | 3,8 |
-| OT-1259 | Aireador | Hidráulica | Día | 1 | 3,0 |
-| OT-1272 | Generador diésel | Eléctrica | Noche | 1 | 4,6 |
-| OT-1285 | Bomba de alimentación | Eléctrica | Día | 3 | 5,4 |
-| OT-1298 | Bomba de alimentación | Eléctrica | Noche | 2 | 4,2 |
-
-Fuente: elaboración propia.
+La Tabla 1 del documento presenta las 20 OT de la muestra con sus variables: equipo, tipo de falla, turno (día o noche), repuestos usados y horas de reparación.
 
 ## Pregunta 1
 
@@ -63,7 +38,6 @@ Construye en Infostat las tablas de distribución de frecuencias y los gráficos
 - c) Elabora un gráfico de sectores (circular) para tipo de falla, seleccionando categorías en filas, y un histograma para horas de reparación, e incorpora las capturas de Infostat.
 - d) Indica qué tipo de falla concentra más OT y en qué intervalo se ubica la mayor cantidad de reparaciones.
 
-Procedimiento sugerido: Infostat → Estadísticas → Frecuencias ("Tipo de falla") → Gráficos → Sectores (categorías en filas); luego Frecuencias de "Horas de reparación" con 5 intervalos → Gráficos → Histograma.
 
 ## Pregunta 3
 

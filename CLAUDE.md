@@ -25,7 +25,8 @@ Público en **https://solucionariouni.com** (GitHub Pages, repo `elsolucionario/
 
 1. Copiar el archivo a `pdfs/` con nombre en minúsculas y guiones.
 2. Crear `pdfs/<mismo-nombre>.md` copiando `pdfs/_PLANTILLA.md` (`titulo`, `curso`, `universidad`, `tipo`, `archivo`, `fecha`, `palabras`, `descripcion`).
-3. Debajo del front matter, transcribir los ejercicios con `## Pregunta N` (si es escaneado, leer las páginas como imagen).
+3. Debajo del front matter, transcribir solo **el caso/enunciado y lo que pide cada pregunta** con `## Pregunta N`
+   (si es escaneado, leer las páginas como imagen). **No copiar tablas de datos** ni instrucciones administrativas: no hace falta para Google.
 
 ## Curso o universidad nuevos
 
