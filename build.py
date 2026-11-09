@@ -1711,6 +1711,8 @@ def main():
     escribir("sitemap.xml", sitemap(sitio, ejercicios, documentos, cursos, universidades))
     escribir("robots.txt", f"User-agent: *\nAllow: /\n\nSitemap: {sitio['url']}/sitemap.xml\n")
     escribir(".nojekyll", "")
+    if "github.io" not in sitio["dominio"]:  # dominio propio (p. ej. solucionariouni.com)
+        escribir("CNAME", sitio["dominio"].split("/")[0] + "\n")
 
     sin_paginas = [d["titulo"] for d in documentos if not d.get("paginas")]
     con_marca = sum(1 for d in propios if d.get("con_marca"))

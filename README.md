@@ -2,7 +2,7 @@
 
 Biblioteca abierta de ejercicios universitarios de ingeniería (Estática, Dinámica, Resistencia de Materiales, Mecánica de Materiales, Mecánica de Fluidos…) publicada por **Lindey Asesoramiento Universitario** · WhatsApp +51 970 302 148.
 
-Sitio: https://elsolucionario.github.io/biblioteca-lindey/
+Sitio: https://solucionariouni.com/ (también responde en https://elsolucionario.github.io/biblioteca-lindey/, que redirige al dominio)
 
 ## Cómo agregar un ejercicio nuevo (desde la web de GitHub)
 
