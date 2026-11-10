@@ -10,7 +10,8 @@
     "UCSUR": "Universidad Científica del Sur",
     "UTP": "Universidad Tecnológica del Perú",
     "IACC": "Instituto Profesional IACC",
-    "UPSJB": "Universidad Privada San Juan Bautista"
+    "UPSJB": "Universidad Privada San Juan Bautista",
+    "UCSC": "Universidad Católica de la Santísima Concepción"
   },
   "nombre_en": "Lindey Library",
   "descripcion_en": "Free library of university engineering exercises with full problem statement and figure: Statics, Dynamics, Strength of Materials, Mechanics of Materials and more.",
@@ -22,7 +23,8 @@
     "Mecánica de Materiales II": "Mechanics of Materials II",
     "Mecánica de Fluidos": "Fluid Mechanics",
     "Interpretación de Planos": "Blueprint Reading",
-    "Estadística Aplicada": "Applied Statistics"
+    "Estadística Aplicada": "Applied Statistics",
+    "Econometría": "Econometrics"
   },
   "orden_cursos": [
     "Estática",
@@ -32,7 +34,8 @@
     "Mecánica de Materiales II",
     "Mecánica de Fluidos",
     "Interpretación de Planos",
-    "Estadística Aplicada"
+    "Estadística Aplicada",
+    "Econometría"
   ],
   "marca_agua": {
     "texto": "LINDEY",
