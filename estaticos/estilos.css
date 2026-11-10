@@ -63,14 +63,14 @@ h2 { font-size: 1.3rem; font-weight: 750; }
 .cabecera { background: var(--marino-profundo); border-bottom: 1px solid rgba(175, 216, 248, .15); }
 .cabecera__in { display: flex; align-items: center; justify-content: space-between; gap: 1rem; min-height: 68px; }
 
-.marca { display: flex; align-items: center; gap: .75rem; text-decoration: none; }
-.marca img { height: 44px; width: auto; }
+.marca { display: flex; align-items: center; gap: .75rem; text-decoration: none; flex: none; }
+.marca img { height: 44px; width: auto; flex: none; aspect-ratio: 184 / 56; }
 .marca__bib {
   color: var(--lima); font-weight: 800; font-size: .8rem; letter-spacing: .14em; text-transform: uppercase;
   border-left: 2px solid rgba(132, 255, 63, .45); padding-left: .75rem;
 }
 
-.cabecera__nav { display: flex; gap: 1.25rem; }
+.cabecera__nav { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: .35rem 1.25rem; }
 .cabecera__nav a { color: var(--celeste); text-decoration: none; font-weight: 600; font-size: .95rem; }
 .cabecera__nav a:hover { color: var(--lima); }
 .cabecera__nav .cabecera__idioma {
@@ -478,9 +478,9 @@ a.chip--curso:hover { color: #fff; }
 }
 
 @media (max-width: 640px) {
-  .cabecera__nav { gap: .9rem; }
-  .cabecera__nav a { font-size: .85rem; }
-  .marca img { height: 36px; }
+  .cabecera__nav { gap: .3rem .75rem; }
+  .cabecera__nav a { font-size: .82rem; }
+  .marca img { height: 32px; }
   .marca__bib { display: none; }
   .buscador { flex-direction: column; }
   .buscador button { padding: .85rem; }
