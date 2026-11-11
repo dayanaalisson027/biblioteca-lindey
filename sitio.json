@@ -12,7 +12,8 @@
     "IACC": "Instituto Profesional IACC",
     "UPSJB": "Universidad Privada San Juan Bautista",
     "UCSC": "Universidad Católica de la Santísima Concepción",
-    "UC": "Universidad Continental"
+    "UC": "Universidad Continental",
+    "UPN": "Universidad Privada del Norte"
   },
   "nombre_en": "Lindey Library",
   "descripcion_en": "Free library of university engineering exercises with full problem statement and figure: Statics, Dynamics, Strength of Materials, Mechanics of Materials and more.",
@@ -25,7 +26,9 @@
     "Mecánica de Fluidos": "Fluid Mechanics",
     "Interpretación de Planos": "Blueprint Reading",
     "Estadística Aplicada": "Applied Statistics",
-    "Econometría": "Econometrics"
+    "Econometría": "Econometrics",
+    "Ingeniería Económica": "Engineering Economics",
+    "Análisis Estructural Avanzado": "Advanced Structural Analysis"
   },
   "orden_cursos": [
     "Estática",
@@ -36,7 +39,9 @@
     "Mecánica de Fluidos",
     "Interpretación de Planos",
     "Estadística Aplicada",
-    "Econometría"
+    "Econometría",
+    "Ingeniería Económica",
+    "Análisis Estructural Avanzado"
   ],
   "marca_agua": {
     "texto": "LINDEY",
