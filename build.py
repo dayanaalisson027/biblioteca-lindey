@@ -804,7 +804,7 @@ def pagina(sitio, *, raiz, ruta, titulo, descripcion, contenido, imagen_social=N
     mensaje_wa = mensaje_wa or ("Hi Lindey, I found the Lindey Library and I'd like to get the solution." if en
                                 else "Hola Lindey, vi la Biblioteca Lindey y quiero pedir mi solucionario.")
     bloques_ld = "".join(
-        f'\n<script type="application/ld+json">{json.dumps(b, ensure_ascii=False)}</script>'
+        f'\n<script type="application/ld+json">{json.dumps(b, ensure_ascii=False).replace("<", "\\u003c")}</script>'
         for b in (jsonld or [])
     )
     verificacion = (
@@ -835,6 +835,8 @@ def pagina(sitio, *, raiz, ruta, titulo, descripcion, contenido, imagen_social=N
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' {esc(sitio['contador_vistas']['servicio'].rstrip('/'))}; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <title>{esc(titulo)}</title>
 <meta name="description" content="{esc(descripcion)}">
 <meta name="robots" content="{robots}">

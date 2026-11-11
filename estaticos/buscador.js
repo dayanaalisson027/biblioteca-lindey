@@ -8,6 +8,9 @@
 (function () {
   "use strict";
 
+  // Seguridad: si otra web incrusta esta página dentro de un marco (clickjacking), salir del marco.
+  try { if (window.top !== window.self) window.top.location = window.self.location.href; } catch (e) { /* marco ajeno */ }
+
   var raiz = document.body.getAttribute("data-raiz") || "";
   var EN = document.documentElement.lang === "en";
   var TXT = EN ? {
