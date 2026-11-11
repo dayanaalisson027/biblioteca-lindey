@@ -13,7 +13,8 @@
     "UPSJB": "Universidad Privada San Juan Bautista",
     "UCSC": "Universidad Católica de la Santísima Concepción",
     "UC": "Universidad Continental",
-    "UPN": "Universidad Privada del Norte"
+    "UPN": "Universidad Privada del Norte",
+    "UCSP": "Universidad Católica San Pablo"
   },
   "nombre_en": "Lindey Library",
   "descripcion_en": "Free library of university engineering exercises with full problem statement and figure: Statics, Dynamics, Strength of Materials, Mechanics of Materials and more.",
