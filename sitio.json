@@ -33,7 +33,8 @@
     "Análisis Estructural Avanzado": "Advanced Structural Analysis",
     "Dibujo en AutoCAD 2D y 3D": "AutoCAD 2D and 3D Drawing",
     "Programación Aplicada": "Applied Programming",
-    "Modelos Estocásticos": "Stochastic Models"
+    "Modelos Estocásticos": "Stochastic Models",
+    "Mecánica de Suelos II": "Soil Mechanics II"
   },
   "orden_cursos": [
     "Estática",
@@ -49,7 +50,8 @@
     "Análisis Estructural Avanzado",
     "Dibujo en AutoCAD 2D y 3D",
     "Programación Aplicada",
-    "Modelos Estocásticos"
+    "Modelos Estocásticos",
+    "Mecánica de Suelos II"
   ],
   "marca_agua": {
     "texto": "LINDEY",
