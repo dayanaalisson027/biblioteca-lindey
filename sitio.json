@@ -15,7 +15,8 @@
     "UC": "Universidad Continental",
     "UPN": "Universidad Privada del Norte",
     "UCSP": "Universidad Católica San Pablo",
-    "UNAB": "Universidad Andrés Bello"
+    "UNAB": "Universidad Andrés Bello",
+    "PUCP": "Pontificia Universidad Católica del Perú"
   },
   "nombre_en": "Lindey Library",
   "descripcion_en": "Free library of university engineering exercises with full problem statement and figure: Statics, Dynamics, Strength of Materials, Mechanics of Materials and more.",
@@ -34,7 +35,8 @@
     "Dibujo en AutoCAD 2D y 3D": "AutoCAD 2D and 3D Drawing",
     "Programación Aplicada": "Applied Programming",
     "Modelos Estocásticos": "Stochastic Models",
-    "Mecánica de Suelos II": "Soil Mechanics II"
+    "Mecánica de Suelos II": "Soil Mechanics II",
+    "Gestión Profesional": "Professional Management"
   },
   "orden_cursos": [
     "Estática",
@@ -51,7 +53,8 @@
     "Dibujo en AutoCAD 2D y 3D",
     "Programación Aplicada",
     "Modelos Estocásticos",
-    "Mecánica de Suelos II"
+    "Mecánica de Suelos II",
+    "Gestión Profesional"
   ],
   "marca_agua": {
     "texto": "LINDEY",
